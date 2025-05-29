@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    xxxxxxxxxxxxxxxxx
+</head>
+<body>
+
+</body>
+</html>
+<script>
+    // var ws = new WebSocket('ws://127.0.0.1:1234');
+    // ws.onopen = function(){
+    //     var user_id = 123456;
+    //     ws.send(uid);
+    // };
+    // ws.onmessage = function(e){
+    //     alert(e.data);
+    // };
+
+    // // ws = new WebSocket('wss://nnws.wosb8.vip');
+    ws = new WebSocket('wss://threews.wosb8.vip');
+    ws.onopen =function (a){
+
+        var message = {
+            user_id: 502,
+            token: '5a53e390f2393620e42a25070e2465f6gw78hcj54uc3dpie487qz7hxpu',
+            game_type:6
+        };
+        ws.send(JSON.stringify(message));
+    };
+    ws.onclose = function (a){
+        console.log('断开连接')
+    };
+    ws.onmessage =function (a) {
+        console.log(a)
+        console.log('收到客户端消息')
+
+    }
+
+</script>
