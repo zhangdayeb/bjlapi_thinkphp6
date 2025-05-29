@@ -212,6 +212,7 @@ class CardSettlementService extends CardServiceBase
             // ========================================
             $tempPelv = $value['game_peilv']; // 默认赔率
 
+            // 用户投注幸运 6
             if ($value['result'] == 3) {
                 // 幸运6特殊处理：根据庄家牌数选择赔率
                 $pei_lv = explode('/', $value['game_peilv']); // 格式：12/20
@@ -220,7 +221,9 @@ class CardSettlementService extends CardServiceBase
                 } elseif ($pai_result['luckySize'] == 3) {
                     $tempPelv = intval($pei_lv[1]); // 3张牌赔率
                 }
-            } elseif ($value['result'] == 8) {
+            }
+            // 用户投注庄 当局结果幸运6 并且开了免佣
+            if ($value['result'] == 8) {
                 // 免佣庄特殊处理：庄6点赢只赔50%
                 if ($value['is_exempt'] == 1 && $pai_result['zhuang_point'] == 6) {
                     $tempPelv = 0.5;
@@ -247,7 +250,8 @@ class CardSettlementService extends CardServiceBase
                 ];
             } else {
                 // --- 未中奖处理 ---
-                if ($pai_result['win'] == 3) {
+                // if ($pai_result['win'] == 3) {
+                if (in_array(3,$pai_result['win_array'])) {
                     // 和局特殊处理：庄闲投注退回本金
                     if ($value['result'] == 8 || $value['result'] == 6) {
                         $userSaveDataTemp[$key] = [

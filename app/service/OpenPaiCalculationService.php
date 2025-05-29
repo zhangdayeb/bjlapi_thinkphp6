@@ -370,34 +370,39 @@ class OpenPaiCalculationService
         // 胜负判断逻辑  新的逻辑 支持 庄 闲 和 幸运6(单双) 龙7 熊8 大小老虎 也就是说
         // 这里 win_array 添加的 数字 是 ntp_dianji_game_peilv 赔率表里面的ID 根据用户迎娶的选项 去 计算赔率 金钱这些
         // ========================================
-        switch ($resId) {
-            case 1: // 大
-                return $paiInfo['size'] == 1;
 
-            case 2: // 闲对
-                return $paiInfo['xian_dui'];
+        // 判断用户投注信息 是否在 中将池子里面
+        return in_array($resId, $paiInfo['win_array']); 
 
-            case 3: // 幸运6
-                return $paiInfo['lucky'] == 1;
+        // 下面是之前的判断方案
+        // switch ($resId) {
+        //     case 1: // 大
+        //         return $paiInfo['size'] == 1;
 
-            case 4: // 庄对
-                return $paiInfo['zhuang_dui'];
+        //     case 2: // 闲对
+        //         return $paiInfo['xian_dui'];
 
-            case 5: // 小
-                return $paiInfo['size'] == 0;
+        //     case 3: // 幸运6
+        //         return $paiInfo['lucky'] == 1;
 
-            case 6: // 闲
-                return $paiInfo['win'] == 2;
+        //     case 4: // 庄对
+        //         return $paiInfo['zhuang_dui'];
 
-            case 7: // 和
-                return $paiInfo['win'] == 3;
+        //     case 5: // 小
+        //         return $paiInfo['size'] == 0;
 
-            case 8: // 庄
-                return $paiInfo['win'] == 1;
+        //     case 6: // 闲
+        //         return $paiInfo['win'] == 2;
 
-            default:
-                return false;
-        }
+        //     case 7: // 和
+        //         return $paiInfo['win'] == 3;
+
+        //     case 8: // 庄
+        //         return $paiInfo['win'] == 1;
+
+        //     default:
+        //         return false;
+        // }
     }
 
     /**
