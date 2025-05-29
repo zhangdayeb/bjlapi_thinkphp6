@@ -106,8 +106,8 @@ class OpenPaiCalculationService
         // ========================================
         $luckySize = 2;         // 幸运6的牌数（默认2张）
         $size = 0;              // 大小计数器（用于判断大小）
-        $zhuang_dui = false;    // 是否庄对
-        $xian_dui = false;      // 是否闲对
+        $zhuang_dui = 0;    // 是否庄对
+        $xian_dui = 0;      // 是否闲对
         $lucky = 0;             // 幸运6点数累计
         $zhuang_string = '';    // 庄家牌面描述
         $zhuang_count = 0;      // 庄家牌数量
@@ -127,12 +127,12 @@ class OpenPaiCalculationService
 
         // 判断庄对：比较庄家前两张牌的牌值
         if (isset($data[2], $data[3]) && $data[2][0] === $data[3][0]) {
-            $zhuang_dui = true;
+            $zhuang_dui = 1;
         }
 
         // 判断闲对：比较闲家前两张牌的牌值
         if (isset($data[4], $data[5]) && $data[4][0] === $data[5][0]) {
-            $xian_dui = true;
+            $xian_dui = 1;
         }
 
         // ========================================
@@ -271,30 +271,80 @@ class OpenPaiCalculationService
         $res['lucky'] = $res['lucky'] % 10;
 
         // ========================================
-        // 胜负判断逻辑
+        // 胜负判断逻辑  原始代码备份
         // ========================================
-        $win = 0;   // 主结果：1=庄赢, 2=闲赢, 3=和牌, 0=错误
-        $lucky = 0; // 幸运6结果：0=否, 1=是
+        // $win = 0;   // 主结果：1=庄赢, 2=闲赢, 3=和牌, 0=错误
+        // $lucky = 0; // 幸运6结果：0=否, 1=是
 
-        if (intval($res['zhuang_point']) === intval($res['xian_point'])) {
-            // 点数相等 = 和牌
-            $win = 3;
-        } elseif (intval($res['zhuang_point']) > intval($res['xian_point'])) {
-            // 庄家点数大 = 庄赢
-            $win = 1;
+        // if (intval($res['zhuang_point']) === intval($res['xian_point'])) {
+        //     // 点数相等 = 和牌
+        //     $win = 3;
+        // } elseif (intval($res['zhuang_point']) > intval($res['xian_point'])) {
+        //     // 庄家点数大 = 庄赢
+        //     $win = 1;
             
-            // 幸运6判断：庄赢且庄家点数为6点
-            if (intval($res['lucky']) === 6) {
-                $lucky = 1;
-            }
-        } elseif (intval($res['zhuang_point']) < intval($res['xian_point'])) {
-            // 闲家点数大 = 闲赢
-            $win = 2;
+        //     // 幸运6判断：庄赢且庄家点数为6点
+        //     if (intval($res['lucky']) === 6) {
+        //         $lucky = 1;
+        //     }
+        // } elseif (intval($res['zhuang_point']) < intval($res['xian_point'])) {
+        //     // 闲家点数大 = 闲赢
+        //     $win = 2;
+        // }
+
+        // // 更新结果到数组中
+        // $res['win'] = $win;
+        // $res['lucky'] = $lucky;
+
+        // ========================================
+        // 胜负判断逻辑  新的逻辑 支持 庄 闲 和 幸运6(单双) 龙7 熊8 大小老虎 也就是说
+        // 这里 win_array 添加的 数字 是 ntp_dianji_game_peilv 赔率表里面的ID 根据用户迎娶的选项 去 计算赔率 金钱这些
+        // ========================================
+        $win_array = 0;   // 主结果：1=庄赢, 2=闲赢, 3=和牌, 0=错误       
+        
+        if (intval($res['xian_dui']) === 1) {
+            // 闲对
+            $win_array[] = 2;
         }
+        if (intval($res['lucky']) === 6) {
+            // 幸运6判断：庄赢且庄家点数为6点
+            $win_array[] = 3;
+        }
+        if (intval($res['zhuang_dui']) === 1) {
+            // 庄对
+            $win_array[] = 4;
+        }
+        if (intval($res['zhuang_point']) < intval($res['xian_point'])) {
+            // 闲家点数大 == 闲赢
+            $win_array[] = 6;
+        }
+        if (intval($res['zhuang_point']) === intval($res['xian_point'])) {
+            // 点数相等 == 和牌
+            $win_array[] = 7;
+        } 
+        if (intval($res['zhuang_point']) > intval($res['xian_point'])) {
+            // 庄家点数大 == 庄赢
+            $win_array[] = 8;
+        }
+        if ((intval($res['zhuang_point']) > intval($res['xian_point'])) && (intval($res['zhuang_point']) === 7)) {
+            // 庄家点数大 == 庄赢 龙7
+            $win_array[] = 9;
+        }        
+        if ((intval($res['zhuang_point']) < intval($res['xian_point'])) && (intval($res['xian_point']) === 8) ) {
+            // 闲家点数大 == 闲赢 熊8
+            $win_array[] = 10;
+        }
+        if (intval($res['lucky']) === 6 && intval($res['luckySize']) ===2 ) {
+            // 幸运6判断：庄赢且庄家点数为6点  小老虎
+            $win_array[] = 11; 
+        }
+        if (intval($res['lucky']) === 6 && intval($res['luckySize']) ===3 ) {
+            // 幸运6判断：庄赢且庄家点数为6点 大老虎
+            $win_array[] = 12;
+        }        
 
         // 更新结果到数组中
-        $res['win'] = $win;
-        $res['lucky'] = $lucky;
+        $res['win_array'] = $win_array;
 
         return $res;
     }
@@ -316,6 +366,10 @@ class OpenPaiCalculationService
      */
     public function user_win_or_not(int $resId, array $paiInfo): bool
     {
+        // ========================================
+        // 胜负判断逻辑  新的逻辑 支持 庄 闲 和 幸运6(单双) 龙7 熊8 大小老虎 也就是说
+        // 这里 win_array 添加的 数字 是 ntp_dianji_game_peilv 赔率表里面的ID 根据用户迎娶的选项 去 计算赔率 金钱这些
+        // ========================================
         switch ($resId) {
             case 1: // 大
                 return $paiInfo['size'] == 1;
@@ -356,15 +410,20 @@ class OpenPaiCalculationService
      */
     public function user_pai_chinese(int $res): string
     {
+        // 这个数组 可以根据 游戏类型 去 赔率表里面读取 这个位置 闲临时这样用了
         $pai_names = [
             1 => '大', 
             2 => '闲对', 
-            3 => '幸运', 
+            3 => '幸运6', 
             4 => '庄对', 
             5 => '小', 
             6 => '闲', 
             7 => '和', 
-            8 => '庄'
+            8 => '庄',
+            9 => '龙7', 
+            10 => '熊8', 
+            11 => '小老虎', 
+            12 => '大老虎',
         ];
         
         return $pai_names[$res] ?? '未知';
@@ -381,37 +440,43 @@ class OpenPaiCalculationService
     public function pai_chinese(array $paiInfo): string
     {
         $string = '';
-
-        // 大小结果
-        if ($paiInfo['size'] == 0) {
-            $string .= '小|';
-        } elseif ($paiInfo['size'] == 1) {
-            $string .= '大|';
+        foreach ($paiInfo['win_array'] as $win) {
+            $string .= $this->user_pai_chinese($win).'|';
         }
-
-        // 对子结果
-        if ($paiInfo['zhuang_dui'] == true) {
-            $string .= '庄对|';
-        }
-        if ($paiInfo['xian_dui'] == true) {
-            $string .= '闲对|';
-        }
-
-        // 幸运6结果
-        if ($paiInfo['lucky'] > 0) {
-            $string .= '幸运6|';
-        }
-
-        // 主要胜负结果
-        if ($paiInfo['win'] == 1) {
-            $string .= '庄赢|';
-        } elseif ($paiInfo['win'] == 2) {
-            $string .= '闲赢|';
-        } elseif ($paiInfo['win'] == 3) {
-            $string .= '和牌|';
-        }
-
         return $string;
+
+        // $string = '';
+
+        // // 大小结果
+        // if ($paiInfo['size'] == 0) {
+        //     $string .= '小|';
+        // } elseif ($paiInfo['size'] == 1) {
+        //     $string .= '大|';
+        // }
+
+        // // 对子结果
+        // if ($paiInfo['zhuang_dui'] == 1) {
+        //     $string .= '庄对|';
+        // }
+        // if ($paiInfo['xian_dui'] == 1) {
+        //     $string .= '闲对|';
+        // }
+
+        // // 幸运6结果
+        // if ($paiInfo['lucky'] > 0) {
+        //     $string .= '幸运6|';
+        // }
+
+        // // 主要胜负结果
+        // if ($paiInfo['win'] == 1) {
+        //     $string .= '庄赢|';
+        // } elseif ($paiInfo['win'] == 2) {
+        //     $string .= '闲赢|';
+        // } elseif ($paiInfo['win'] == 3) {
+        //     $string .= '和牌|';
+        // }
+
+        // return $string;
     }
 
     /**
@@ -448,37 +513,45 @@ class OpenPaiCalculationService
     public function pai_flash(array $paiInfo): array
     {
         $map = [];
-
-        // 大小闪烁
-        if ($paiInfo['size'] == 0) {
-            $map[] = 5; // 小
-        } elseif ($paiInfo['size'] == 1) {
-            $map[] = 1; // 大
-        }
-
-        // 对子闪烁
-        if ($paiInfo['zhuang_dui'] == true) {
-            $map[] = 4; // 庄对
-        }
-        if ($paiInfo['xian_dui'] == true) {
-            $map[] = 2; // 闲对
-        }
-
-        // 幸运6闪烁
-        if ($paiInfo['lucky'] > 0) {
-            $map[] = 3; // 幸运6
-        }
-
-        // 主结果闪烁
-        if ($paiInfo['win'] == 1) {
-            $map[] = 8; // 庄
-        } elseif ($paiInfo['win'] == 2) {
-            $map[] = 6; // 闲
-        } elseif ($paiInfo['win'] == 3) {
-            $map[] = 7; // 和
+        
+        foreach ($paiInfo['win_array'] as $win) {
+            $map[] = $win;
         }
 
         return $map;
+
+        //$map = [];
+
+        // // 大小闪烁
+        // if ($paiInfo['size'] == 0) {
+        //     $map[] = 5; // 小
+        // } elseif ($paiInfo['size'] == 1) {
+        //     $map[] = 1; // 大
+        // }
+
+        // // 对子闪烁
+        // if ($paiInfo['zhuang_dui'] == true) {
+        //     $map[] = 4; // 庄对
+        // }
+        // if ($paiInfo['xian_dui'] == true) {
+        //     $map[] = 2; // 闲对
+        // }
+
+        // // 幸运6闪烁
+        // if ($paiInfo['lucky'] > 0) {
+        //     $map[] = 3; // 幸运6
+        // }
+
+        // // 主结果闪烁
+        // if ($paiInfo['win'] == 1) {
+        //     $map[] = 8; // 庄
+        // } elseif ($paiInfo['win'] == 2) {
+        //     $map[] = 6; // 闲
+        // } elseif ($paiInfo['win'] == 3) {
+        //     $map[] = 7; // 和
+        // }
+
+        // return $map;
     }
 }
 
