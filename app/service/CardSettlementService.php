@@ -251,6 +251,7 @@ class CardSettlementService extends CardServiceBase
             } else {
                 // --- 未中奖处理 ---
                 // if ($pai_result['win'] == 3) {
+                // 和局特殊处理 庄闲幸运6 退回 大小老虎 龙7熊8 没有退回
                 if (in_array(3,$pai_result['win_array'])) {
                     // 和局特殊处理：庄闲投注退回本金
                     if ($value['result'] == 8 || $value['result'] == 6) {
