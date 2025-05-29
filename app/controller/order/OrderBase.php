@@ -53,43 +53,6 @@ class OrderBase extends Base
                     if ($money < self::$user['bjl_xian_hong_zhuang_min']) show([], config('ToConfig.http_code.error'), lang('limit red and zhuang bet least') . ':' . self::$user['bjl_xian_hong_zhuang_min']);
                     if ($money > self::$user['bjl_xian_hong_zhuang_max']) show([], config('ToConfig.http_code.error'), lang('limit red and zhuang bet most') . ':' . self::$user['bjl_xian_hong_zhuang_max']);
                     break;
-                //20开始 龙虎斗
-                case 20://龙虎斗 龙
-                    if ($money < self::$user['lh_xian_hong_long_min']) show([], config('ToConfig.http_code.error'), lang('limit red and loong bet least') . ':' . self::$user['lh_xian_hong_long_min']);
-                    if ($money > self::$user['lh_xian_hong_long_max']) show([], config('ToConfig.http_code.error'), lang('limit red and loong bet most') . ':' . self::$user['lh_xian_hong_long_max']);
-                    break;
-                case 21://龙虎斗 虎
-                    if ($money < self::$user['lh_xian_hong_hu_min']) show([], config('ToConfig.http_code.error'), lang('limit red and tiger bet least') . ':' . self::$user['lh_xian_hong_hu_min']);
-                    if ($money > self::$user['lh_xian_hong_hu_max']) show([], config('ToConfig.http_code.error'), lang('limit red and tiger bet most') . ':' . self::$user['lh_xian_hong_hu_max']);
-                    break;
-                case 22://龙虎斗 和
-                    if ($money < self::$user['lh_xian_hong_he_min']) show([], config('ToConfig.http_code.error'), lang('limit red and minimum bet least') . ':' . self::$user['lh_xian_hong_he_min']);
-                    if ($money > self::$user['lh_xian_hong_he_max']) show([], config('ToConfig.http_code.error'), lang('limit red and minimum bet most') . ':' . self::$user['lh_xian_hong_he_max']);
-                    break;
-                case 30://牛牛翻倍 闲1
-                case 32://牛牛翻倍 闲2
-                case 34://牛牛翻倍 闲3
-                    break;
-                case 31://牛牛平倍 闲1
-                case 33://牛牛平倍 闲2
-                case 35://牛牛平倍 闲3
-                    break;
-                case 36://超级闲1
-                case 37://超级闲2
-                case 38://超级闲3
-                    break;
-                case 40://三公翻倍闲1
-                case 42://三公翻倍闲2
-                case 44://三公翻倍闲3
-                    break;
-                case 41://三公平倍闲1
-                case 43://三公平倍闲2
-                case 45://三公平倍闲3
-                    break;
-                case 46://三公超级闲1
-                case 47://三公超级闲2
-                case 48://三公超级闲3
-                    break;
             }
             return true;
         }
@@ -122,55 +85,6 @@ class OrderBase extends Base
                 case 8://百家乐 庄
                     if ($money < $table_info['bjl_xian_hong_zhuang_min']) show([], config('ToConfig.http_code.error'), lang('limit red and zhuang bet least') . ':' . $table_info['bjl_xian_hong_zhuang_min']);
                     if ($money > $table_info['bjl_xian_hong_zhuang_max']) show([], config('ToConfig.http_code.error'), lang('limit red and zhuang bet most') . ':' . $table_info['bjl_xian_hong_zhuang_max']);
-                    break;
-                //20开始 龙虎斗
-                case 20://龙虎斗 龙
-                    if ($money < $table_info['lh_xian_hong_long_min']) show([], config('ToConfig.http_code.error'), lang('limit red and loong bet least') . ':' . $table_info['lh_xian_hong_long_min']);
-                    if ($money > $table_info['lh_xian_hong_long_max']) show([], config('ToConfig.http_code.error'), lang('limit red and loong bet most') . ':' . $table_info['lh_xian_hong_long_max']);
-                    break;
-                case 21://龙虎斗 虎
-                    if ($money < $table_info['lh_xian_hong_hu_min']) show([], config('ToConfig.http_code.error'), lang('limit red and tiger bet least') . ':' . $table_info['lh_xian_hong_hu_min']);
-                    if ($money > $table_info['lh_xian_hong_hu_max']) show([], config('ToConfig.http_code.error'), lang('limit red and tiger bet most') . ':' . $table_info['lh_xian_hong_hu_max']);
-                    break;
-                case 22://龙虎斗 和
-                    if ($money < $table_info['lh_xian_hong_he_min']) show([], config('ToConfig.http_code.error'), lang('limit red and minimum bet least') . ':' . $table_info['lh_xian_hong_he_min']);
-                    if ($money > $table_info['lh_xian_hong_he_max']) show([], config('ToConfig.http_code.error'), lang('limit red and minimum bet most') . ':' . $table_info['lh_xian_hong_he_max']);
-                    break;
-                case 30://牛牛翻倍 闲1
-                case 32://牛牛翻倍 闲2
-                case 34://牛牛翻倍 闲3
-                    if ($money < $table_info['nn_xh_fanbei_min']) show([], config('ToConfig.http_code.error'), lang('limit red minimum least') . ':' . $table_info['nn_xh_fanbei_min']);
-                    if ($money > $table_info['nn_xh_fanbei_max']) show([], config('ToConfig.http_code.error'), lang('limit red maximum most') . ':' . $table_info['nn_xh_fanbei_max']);
-                    break;
-                case 31://牛牛平倍 闲1
-                case 33://牛牛平倍 闲2
-                case 35://牛牛平倍 闲3
-                    if ($money < $table_info['nn_xh_pingbei_min']) show([], config('ToConfig.http_code.error'), lang('limit red minimum least') . ':' . $table_info['nn_xh_pingbei_min']);
-                    if ($money > $table_info['nn_xh_pingbei_max']) show([], config('ToConfig.http_code.error'), lang('limit red maximum most') . ':' . $table_info['nn_xh_pingbei_max']);
-                    break;
-                case 36://超级闲1
-                case 37://超级闲2
-                case 38://超级闲3
-                    if ($money < $table_info['nn_xh_chaoniu_min']) show([], config('ToConfig.http_code.error'), lang('limit red minimum least') . ':' . $table_info['nn_xh_chaoniu_min']);
-                    if ($money > $table_info['nn_xh_chaoniu_max']) show([], config('ToConfig.http_code.error'), lang('limit red maximum most') . ':' . $table_info['nn_xh_chaoniu_max']);
-                    break;
-                case 40://三公翻倍闲1
-                case 42://三公翻倍闲2
-                case 44://三公翻倍闲3
-                    if ($money < $table_info['sg_xh_fanbei_min']) show([], config('ToConfig.http_code.error'), lang('limit red minimum least') . ':' . $table_info['sg_xh_fanbei_min']);
-                    if ($money > $table_info['sg_xh_fanbei_max']) show([], config('ToConfig.http_code.error'), lang('limit red maximum most') . ':' . $table_info['sg_xh_fanbei_max']);
-                    break;
-                case 41://三公平倍闲1
-                case 43://三公平倍闲2
-                case 45://三公平倍闲3
-                    if ($money < $table_info['sg_xh_pingbei_min']) show([], config('ToConfig.http_code.error'), lang('limit red minimum least') . ':' . $table_info['sg_xh_pingbei_min']);
-                    if ($money > $table_info['sg_xh_pingbei_max']) show([], config('ToConfig.http_code.error'), lang('limit red maximum most') . ':' . $table_info['sg_xh_pingbei_max']);
-                    break;
-                case 46://三公超级闲1
-                case 47://三公超级闲2
-                case 48://三公超级闲3
-                    if ($money < $table_info['sg_xh_chaoniu_min']) show([], config('ToConfig.http_code.error'), lang('limit red minimum least') . ':' . $table_info['sg_xh_chaoniu_min']);
-                    if ($money > $table_info['sg_xh_chaoniu_max']) show([], config('ToConfig.http_code.error'), lang('limit red maximum most') . ':' . $table_info['sg_xh_chaoniu_max']);
                     break;
             }
             return true;
