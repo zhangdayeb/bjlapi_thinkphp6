@@ -42,7 +42,7 @@ $worker->onMessage = function ($connection, $data) {
         $worker->uidConnections[$connection->uid] = $connection;
 
 
-        //前端逻辑变化，这里就不发连接成功，改为发送台座信息过去
+        //前端逻辑变化，这里就不发连接成功，改为发送台桌信息过去
         $WorkerOpenPaiService = new \app\service\WorkerOpenPaiService();
         $user_id = intval(str_replace('_', '', $data['user_id']));
 
@@ -62,7 +62,7 @@ $worker->onMessage = function ($connection, $data) {
             $msg = $data['msg'];
         }
         $array = ['code' => $data['code'], 'msg' => $msg, 'data' => $data];
-        //约定推送语音消息,user消息推送到台座
+        //约定推送语音消息,user消息推送到台桌
         if ($data['code'] == 205){
             $user_id .='_';
             $ret = sendMessageByUid($user_id, json_encode($array));
@@ -107,7 +107,7 @@ $worker->onWorkerStart = function ($worker) {
             }
             $user_id = intval(str_replace('_', '', $data['user_id']));
 
-            //获取台卓信息 但台座有倒计时信息是 ，不存在开牌。redis存在当前台座倒计时的时候，查询当前还有多少倒计时
+            //获取台卓信息 但台桌有倒计时信息是 ，不存在开牌。redis存在当前台桌倒计时的时候，查询当前还有多少倒计时
             $WorkerOpenPaiService = new \app\service\WorkerOpenPaiService();
             if (redis()->get('table_set_start_signal_' . $data['table_id'])) {
                 $table_info_time = redis()->get('table_info_' . $data['table_id']);

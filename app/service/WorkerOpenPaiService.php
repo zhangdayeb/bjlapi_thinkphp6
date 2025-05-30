@@ -154,7 +154,7 @@ class WorkerOpenPaiService
     // ========================================
     
     /*
-    // 台座露珠列表 - 已迁移到其他服务
+    // 台桌露珠列表 - 已迁移到其他服务
     public function lu_zhu_list($table_id = 1, $game_type = 3)
     {
         //百家乐台桌
@@ -191,7 +191,7 @@ class WorkerOpenPaiService
         if ($data['game_table_type'] == 'luzhu_list'){
             return $this->lu_zhu_list($data['table_id']);
         }
-        // 获取台座列表
+        // 获取台桌列表
         if ($data['game_table_type'] == 'table_list'){
             return $this->get_table_list($data['game_type']);
         }

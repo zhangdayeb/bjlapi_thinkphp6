@@ -32,7 +32,7 @@ class OrderBase extends Base
                 case 2://百家乐 闲对
                     if ($money < self::$user['bjl_xian_hong_xian_dui_min']) show([], config('ToConfig.http_code.error'), lang('limit red leisure to bet at least') . ':' . self::$user['bjl_xian_hong_xian_dui_min']);
                     if ($money > self::$user['bjl_xian_hong_xian_dui_max']) show([], config('ToConfig.http_code.error'), lang('limit red leisure to bet the most') . ':' . self::$user['bjl_xian_hong_xian_dui_max']);
-                    //台座限红
+                    //台桌限红
                     break;
                 case 3: //百家乐 幸运6
                     if ($money < self::$user['bjl_xian_hong_lucky6_min']) show([], config('ToConfig.http_code.error'), lang('limit red lucky 6 minimum bet') . ':' . self::$user['bjl_xian_hong_lucky6_min']);
@@ -58,9 +58,9 @@ class OrderBase extends Base
             return true;
         }
 
-        //台座限红
+        //台桌限红
         if (isset($table_info['is_table_xian_hong']) && $table_info['is_table_xian_hong'] == 1) {
-            switch ($odds->id) { //台座限红
+            switch ($odds->id) { //台桌限红
                 //百家乐限红
                 case 2://百家乐 闲对
                     if ($money < $table_info['bjl_xian_hong_xian_dui_min']) show([], config('ToConfig.http_code.error'), lang('limit red leisure to bet at least') . ':' . $table_info['bjl_xian_hong_xian_dui_min']);

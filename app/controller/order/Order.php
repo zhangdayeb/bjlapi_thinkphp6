@@ -41,7 +41,7 @@ class Order extends OrderBase
         $game_type = $this->request->param('game_type/d', 0);                                         // 获取游戏类型
         if (empty($game_type)) show([], config('ToConfig.http_code.error'), 'game not selected');         //  为空，则提示
         if ($game_type != 3 && $game_type !=1) show([], config('ToConfig.http_code.error'), 'game not selected');    //  为空，则提示
-        //查询台座状态
+        //查询台桌状态
 
         LogHelper::debug('下注参数接收', [
             'bet_data' => $post,

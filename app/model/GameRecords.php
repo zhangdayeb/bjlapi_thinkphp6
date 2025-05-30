@@ -12,7 +12,7 @@ class GameRecords extends Model
 
     /**
      * /用户当前局免佣状态
-     * @param $table_id /台座ID
+     * @param $table_id /台桌ID
      * @param $number /靴号铺号
      * @param $user /用户信息
      * @param $is_order /是否需要知道 是否下单过 下单判断免佣会用到

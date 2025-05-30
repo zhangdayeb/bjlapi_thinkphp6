@@ -37,7 +37,7 @@ function redis_sort_set(string $type = 'set', string $name = '', int $key = 0, i
 
 }
 
-//生成台座局号
+//生成台桌局号
 function bureau_number($table_id, $xue_number = false)
 {
     $xue = xue_number($table_id);

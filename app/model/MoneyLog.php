@@ -42,7 +42,7 @@ class MoneyLog extends Model
         !isset($info['deposit_amt']) && $info['deposit_amt'] = 0;
         //备注
         $mark = '下注:' . $info['bet_amt'] . ',押金：' . $info['deposit_amt'] . ',开始金额:' . $info['before_amt'] . ',结束金额:' . $info['end_amt'];
-        $mark .= ',台座/类型:' . $info['table_id'] . '-' . $info['game_type'] . ',靴/铺:' . $info['xue_number'] . '-' . $info['pu_number'] . ',赔率:ID' . $info['game_peilv_id'];
+        $mark .= ',台桌/类型:' . $info['table_id'] . '-' . $info['game_type'] . ',靴/铺:' . $info['xue_number'] . '-' . $info['pu_number'] . ',赔率:ID' . $info['game_peilv_id'];
 
         self::insert([
             'create_time' => date('Y-m-d H:i:s'),

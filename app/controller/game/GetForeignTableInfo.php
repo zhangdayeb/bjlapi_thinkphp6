@@ -51,11 +51,11 @@ class GetForeignTableInfo extends BaseController
     {
         
         $params = $this->request->param();
-       //查询台座是否在洗桌状态
-       //获取台座信息
-        if(!isset($params['tableId']) || empty($params['tableId'])) return show([],1,'台座ID不存在');
+       //查询台桌是否在洗桌状态
+       //获取台桌信息
+        if(!isset($params['tableId']) || empty($params['tableId'])) return show([],1,'台桌ID不存在');
          $table  = Table::where('id',$params['tableId'])->find();
-         if(empty($table)) return show([],1,'台座不存在');
+         if(empty($table)) return show([],1,'台桌不存在');
          $table = $table->toArray();
          if($table['wash_status']  ==1 ){
                show([], 1);
@@ -68,10 +68,10 @@ class GetForeignTableInfo extends BaseController
     {
         
         $params = $this->request->param();
-        //获取台座信息
-        if(!isset($params['tableId']) || empty($params['tableId'])) return show([],1,'台座ID不存在');
+        //获取台桌信息
+        if(!isset($params['tableId']) || empty($params['tableId'])) return show([],1,'台桌ID不存在');
         $table  = Table::where('id',$params['tableId'])->find();
-         if(empty($table)) return show([],1,'台座不存在');
+         if(empty($table)) return show([],1,'台桌不存在');
          $table = $table->toArray();
        $video_near = explode('=',$table['video_near']);
        $video_far = explode('=',$table['video_far']);
@@ -83,55 +83,11 @@ class GetForeignTableInfo extends BaseController
     public function get_lz_list(): string
     {
         $params = $this->request->param();
-        //判断台座是否为洗牌
         $tableId = $this->request->param('tableId',0);
-        if ($tableId <=0 ) show([], config('ToConfig.http_code.error'),'台座ID必填');
-        $table  = Table::where('id',$tableId)->find();
-        $returnData = [];
-        $returnData = Luzhu::LuZhuList($params);
-        
-        // if ($table->wash_status != 1){
-            
-        // }
+        if ($tableId <=0 ) show([], config('ToConfig.http_code.error'),'台桌ID必填');
+        $returnData = Luzhu::LuZhuList($params);        
         show($returnData, 1);
     }
-
-//    //获取台桌露珠信息
-//    public function get_lz_list(): string
-//    {
-//        $params = $this->request->param();
-//        $map = array();
-//        $map['status'] = 1;
-//        $map['table_id'] = $params['tableId'];
-//        if (isset($params['xue']) && $params['xue'] > 0) $map['xue_number'] = $params['xue'];
-//
-//        // 增加靴号的重新处理
-//        if(!isset($map['xue_number'])){
-//            //$one_info = Luzhu::where($map)->order('id desc')->find();
-//            $one_info = Luzhu::where($map)->whereTime('create_time', 'today')->order('id desc')->find();
-//            !empty($one_info) &&  $map['xue_number'] = $one_info->xue_number;
-//        }
-//
-//        $map['game_type'] = isset($params['gameType']) && !empty($params['gameType']) ? $params['gameType'] : 3; // 代表百家乐 | 龙虎
-//
-//        $returnData = array();
-//        $info = Luzhu::whereTime('create_time', 'today')->where('result','<>',0)->where($map)->order('id asc')->limit(66)->select();
-//
-//        // 发给前台的 数据
-//        $i = 0;
-//        foreach ($info as $k => $val) {
-//            $tmp = array();
-//            $t = explode("|", $val['result']);
-//            $tmp['result'] = $t[0];
-//            $tmp['ext'] = $t[1];
-//            if ($tmp['result'] != 0) {
-//                $k = 'k' . $i;
-//                $returnData[$k] = $tmp;
-//                $i++;
-//            }
-//        }
-//        show($returnData, 1);
-//    }
 
     // 获取台桌列表
     public function get_table_list(): string
@@ -486,7 +442,7 @@ class GetForeignTableInfo extends BaseController
     public function get_table_wash_brand()
     {
         $tableId = $this->request->param('tableId',0);
-        if ($tableId <=0 ) show([], config('ToConfig.http_code.error'),'台座ID必填');
+        if ($tableId <=0 ) show([], config('ToConfig.http_code.error'),'台桌ID必填');
         $table  = Table::where('id',$tableId)->find();
         $status = $table->wash_status == 0 ? 1 : 0;
         $table->save(['wash_status'=>$status]);
