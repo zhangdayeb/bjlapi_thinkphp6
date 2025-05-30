@@ -112,9 +112,7 @@ class CardSettlementService extends CardServiceBase
         // ========================================
         // 3. 错误处理和状态检查
         // ========================================
-        LogHelper::debug('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
         if (!$save) {
-            LogHelper::debug('BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB');
             show([], 0, '开牌失败');
         }
 
