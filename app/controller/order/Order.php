@@ -2,6 +2,7 @@
 
 namespace app\controller\order;
 
+use app\controller\common\LogHelper;
 use app\model\GameRecords as models;
 use app\model\GameRecordsTemporary;
 use app\model\MoneyLog;

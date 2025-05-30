@@ -2,6 +2,7 @@
 
 namespace app\controller;
 
+use app\controller\common\LogHelper;
 use app\BaseController;
 use app\business\Curl;
 use app\business\RequestUrl;
