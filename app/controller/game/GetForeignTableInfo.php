@@ -2,6 +2,7 @@
 
 namespace app\controller\game;
 
+use app\controller\common\LogHelper;
 use app\BaseController;
 use app\model\Luzhu;
 use app\model\LuzhuHeguan;
