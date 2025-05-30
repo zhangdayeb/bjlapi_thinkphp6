@@ -1,5 +1,5 @@
 <?php
-
+use app\controller\common\LogHelper;
 use Workerman\Worker;
 use \Workerman\Lib\Timer;
 use \app\service\CardSettlementService;

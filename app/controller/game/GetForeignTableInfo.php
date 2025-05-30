@@ -194,7 +194,6 @@ class GetForeignTableInfo extends BaseController
         LogHelper::debug('=== 开牌流程开始 ===');
         LogHelper::debug('接收到荷官开牌请求', [
             'ip' => request()->ip(),
-            'user_agent' => request()->header('user-agent'),
             'timestamp' => date('Y-m-d H:i:s')
         ]);
 
@@ -215,13 +214,9 @@ class GetForeignTableInfo extends BaseController
         $map['pu_number'] = $params['puNumber'];
         $map['game_type'] = $params['gameType'];
 
-        LogHelper::debug('查询条件构建', $map);
-
         //查询当日最新的一铺牌
         $info = Luzhu::whereTime('create_time', 'today')->where('result','<>',0)->where($map)->find();
         if (!empty($info)) show($info, 0, '数据重复上传');
-
-        LogHelper::debug('重复检查通过');
 
         #####开始预设###########
         //查询是否有预设的开牌信息
@@ -245,14 +240,9 @@ class GetForeignTableInfo extends BaseController
         $HeguanLuzhu['result_pai'] = json_encode($params['pai_result']);
         #####结束预设###########
 
-        LogHelper::debug('露珠数据准备完成', [
-            'system_luzhu' => $map,
-            'heguan_luzhu' => $HeguanLuzhu
-        ]);
 
         // 增加缓存删除
         \think\facade\Cache::delete('luzhuinfo_'.$params['tableId']);
-        LogHelper::debug('清除台桌露珠缓存', ['table_id' => $params['tableId']]);
 
         // 根据游戏类型调用相应服务
         switch ($map['game_type']) {

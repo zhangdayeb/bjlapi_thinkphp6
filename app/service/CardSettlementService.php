@@ -85,20 +85,16 @@ class CardSettlementService extends CardServiceBase
         try {
             // 保存系统露珠数据（可能包含预设结果）
             $luzhuModel->save($post);
-            LogHelper::debug('系统露珠保存成功', ['luzhu_id' => $systemLuzhuId]);
             
             // 保存荷官原始露珠数据（真实开牌结果）
             LuzhuHeguan::insert($HeguanLuzhu);
-            LogHelper::debug('荷官露珠保存成功');
             
             $save = true;
             Db::commit();
-            LogHelper::debug('露珠数据保存成功', ['luzhu_id' => $systemLuzhuId]);
 
         } catch (\Exception $e) {
             $save = false;
             Db::rollback(); // 这里应该是rollback而不是commit
-            LogHelper::error('露珠数据保存失败', $e);
         }
 
         // ========================================
@@ -116,15 +112,15 @@ class CardSettlementService extends CardServiceBase
         // ========================================
         // 3. 错误处理和状态检查
         // ========================================
+        LogHelper::debug('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
         if (!$save) {
-            LogHelper::error('开牌失败 - 数据库保存异常');
+            LogHelper::debug('BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB');
             show([], 0, '开牌失败');
         }
 
         // 如果是预设开牌，更新预设状态为已使用
         if ($id > 0) {
             LuzhuPreset::IsStatus($id);
-            LogHelper::debug('预设开牌状态更新', ['preset_id' => $id]);
         }
 
         // ========================================

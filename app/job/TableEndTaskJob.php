@@ -2,7 +2,7 @@
 
 
 namespace app\job;
-
+use app\controller\common\LogHelper;
 use app\model\Table;
 use think\queue\Job;
 

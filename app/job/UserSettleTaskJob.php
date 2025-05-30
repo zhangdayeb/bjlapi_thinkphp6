@@ -1,8 +1,7 @@
 <?php
-
-
 namespace app\job;
 
+use app\controller\common\LogHelper;
 use app\service\CardSettlementService;
 use think\facade\Log;
 use think\queue\Job;
