@@ -31,7 +31,10 @@ class LuzhuRes extends Model
             $date = date('Y-m-d'.' 09:00:00');
         }
         LogHelper::debug('=== 查询条件 ===',$map);
-        $info = self::whereTime('create_time','>', $date)->cache('luzhuinfo_'.$map['table_id'],60)->where('result','<>',0)->where($map)->order('id asc')->limit($limit)->select();
+        // $s = self::whereTime('create_time','>', $date)->fetchSql(true)->cache('luzhuinfo_'.$map['table_id'],60)->where('result','<>',0)->where($map)->order('id asc')->limit($limit)->select();
+        // LogHelper::debug('=== 查询条件 ===',$s);
+        $info = self::whereTime('create_time','>', $date)->where('result','<>',0)->where($map)->order('id asc')->limit($limit)->select();
+        // $info = self::whereTime('create_time','>', $date)->cache('luzhuinfo_'.$map['table_id'],60)->where('result','<>',0)->where($map)->order('id asc')->limit($limit)->select();
        
         // 发给前台的 数据
         $i = 0;
