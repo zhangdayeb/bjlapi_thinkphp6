@@ -25,14 +25,29 @@ class Order extends OrderBase
     //用户下注
     public function user_bet_order(): string
     {
+        LogHelper::business('=== 用户下注流程开始 ===', [
+            'user_id' => self::$user['id'],
+            'user_balance' => self::$user['money_balance'],
+            'ip' => request()->ip()
+        ]);
+
         $post = $this->request->param('bet');                                                               // 获取投注记录 主要是 注码跟金额
+        
         if (empty($post)) show([], config('ToConfig.http_code.error'), 'amount not selected');                // 空数据 处理
+        
         $table_id = $this->request->param('table_id/d', 0);                                           // 获取台桌ID
         if (empty($table_id)) show([], config('ToConfig.http_code.error'), 'table not selected');          // 为空，提示选择台桌
+        
         $game_type = $this->request->param('game_type/d', 0);                                         // 获取游戏类型
         if (empty($game_type)) show([], config('ToConfig.http_code.error'), 'game not selected');         //  为空，则提示
         if ($game_type != 3 && $game_type !=1) show([], config('ToConfig.http_code.error'), 'game not selected');    //  为空，则提示
         //查询台座状态
+
+        LogHelper::debug('下注参数接收', [
+            'bet_data' => $post,
+            'table_id' => $table_id,
+            'game_type' => $game_type
+        ]);
 
         $find = Table::page_one($table_id);
         if (empty($find)) show([], config('ToConfig.http_code.error'), 'table does not exist');                // 台桌不存在
@@ -40,12 +55,6 @@ class Order extends OrderBase
         $find = Table::table_opening_count_down($find);
         if ($find['run_status'] != 1 || $find['end_time'] <= 0) show([], config('ToConfig.http_code.error'), 'opening card');// 台桌开牌中，禁止投注
 
-        //$find = Table::where('id', $table_id)->find();
-        //if (empty($find)) show([], config('ToConfig.http_code.error'), 'table does not exist');                // 台桌不存在
-        //if ($find['status'] != 1) show([], config('ToConfig.http_code.error'), 'table stop');          // 台桌非运营状态
-        //$find = Table::table_opening_count_down($find);
-//        $end_time = redis()->get('table_set_start_signal_'.$table_id);
-//        if ($end_time - 5 > 0 ) show([], config('ToConfig.http_code.error'), 'opening card');// 台桌开牌中，禁止投注
 
         if (cache('cache_post_order_bet_' . self::$user['id'])) {
             show([],config('ToConfig.http_code.error'), '1秒不能重复操作');

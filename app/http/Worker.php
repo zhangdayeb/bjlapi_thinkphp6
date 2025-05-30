@@ -25,11 +25,18 @@ $worker->onMessage = function ($connection, $data) {
     }
 
     $data = json_decode($data, true);
+
+    LogHelper::debug('WebSocket收到消息', [
+        'connection_id' => spl_object_id($connection),
+        'data' => $data
+    ]);
+
     // 判断当前客户端是否已经验证,即是否设置了uid
     if (!isset($connection->uid)) {
         $connection->lastMessageTime = time();
 
         if (!isset($data['user_id']) || empty($data['user_id'])) {
+            LogHelper::warning('WebSocket连接缺少user_id');
             return $connection->send('连接成功，userId错误');
         }
         if (!isset($data['table_id']) || !isset($data['game_type'])) {
@@ -42,18 +49,31 @@ $worker->onMessage = function ($connection, $data) {
         $worker->uidConnections[$connection->uid] = $connection;
 
 
+        LogHelper::business('WebSocket用户连接成功', [
+            'uid' => $connection->uid,
+            'table_id' => $data['table_id'],
+            'game_type' => $data['game_type']
+        ]);
+
         //前端逻辑变化，这里就不发连接成功，改为发送台座信息过去
         $WorkerOpenPaiService = new \app\service\WorkerOpenPaiService();
         $user_id = intval(str_replace('_', '', $data['user_id']));
 
         if ($user_id) {
             $table_info['table_run_info'] = $WorkerOpenPaiService->get_table_info($data['table_id'], $user_id);
+            LogHelper::debug('获取台桌信息成功', ['user_id' => $user_id]);
         } else {
             $table_info['table_run_info'] = [];
+            LogHelper::debug('游客模式，返回空台桌信息');
         }
 
         return $connection->send(json_encode(['code' => 200, 'msg' => '成功', 'data' => $table_info]));
     }
+
+    LogHelper::debug('处理WebSocket业务消息', [
+        'uid' => $connection->uid,
+        'message_type' => $data['code'] ?? 'unknown'
+    ]);
 
     if (isset($data['code'])) {
         $user_id = str_replace('_', '', $data['user_id']);
@@ -157,7 +177,7 @@ $worker->onClose = function ($connection) {
         $connection->close();
         // 连接断开时删除映射
         unset($worker->uidConnections[$connection->uid]);
-        echo "断开连接";
+        LogHelper::debug('WebSocket连接断开', ['uid' => $connection->uid]);
     }
 };
 

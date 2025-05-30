@@ -45,9 +45,28 @@ class OpenPaiCalculationService
      */
     public function runs(array $pai): array
     {
-        // 执行三步计算流程
-        $calculation_start = $this->calculation_start($this->calculation($pai));
-        return $this->calculation_result($calculation_start);
+        LogHelper::debug('=== 开牌计算开始 ===');
+        LogHelper::debug('原始牌面数据', $pai);
+        
+        $calculation_data = $this->calculation($pai);
+        LogHelper::debug('数据整理结果', $calculation_data);
+        
+        $calculation_start = $this->calculation_start($calculation_data);
+        LogHelper::debug('中间计算结果', $calculation_start);
+        
+        $result = $this->calculation_result($calculation_start);
+        
+        LogHelper::business('开牌计算完成', [
+            'zhuang_point' => $result['zhuang_point'],
+            'xian_point' => $result['xian_point'],
+            'win_array' => $result['win_array'],
+            'win_types' => array_map([$this, 'user_pai_chinese'], $result['win_array'])
+        ]);
+        
+        LogHelper::debug('最终计算结果', $result);
+        LogHelper::debug('=== 开牌计算完成 ===');
+        
+        return $result;
     }
 
     /**
@@ -371,38 +390,17 @@ class OpenPaiCalculationService
         // 这里 win_array 添加的 数字 是 ntp_dianji_game_peilv 赔率表里面的ID 根据用户迎娶的选项 去 计算赔率 金钱这些
         // ========================================
 
+        LogHelper::debug('投注中奖判断', [
+            'bet_type_id' => $resId,
+            'bet_type_name' => $this->user_pai_chinese($resId),
+            'win_array' => $paiInfo['win_array'],
+            'is_win' => $isWin
+        ]);
+        
         // 判断用户投注信息 是否在 中将池子里面
         return in_array($resId, $paiInfo['win_array']); 
 
-        // 下面是之前的判断方案
-        // switch ($resId) {
-        //     case 1: // 大
-        //         return $paiInfo['size'] == 1;
 
-        //     case 2: // 闲对
-        //         return $paiInfo['xian_dui'];
-
-        //     case 3: // 幸运6
-        //         return $paiInfo['lucky'] == 1;
-
-        //     case 4: // 庄对
-        //         return $paiInfo['zhuang_dui'];
-
-        //     case 5: // 小
-        //         return $paiInfo['size'] == 0;
-
-        //     case 6: // 闲
-        //         return $paiInfo['win'] == 2;
-
-        //     case 7: // 和
-        //         return $paiInfo['win'] == 3;
-
-        //     case 8: // 庄
-        //         return $paiInfo['win'] == 1;
-
-        //     default:
-        //         return false;
-        // }
     }
 
     /**

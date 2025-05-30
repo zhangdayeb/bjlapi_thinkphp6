@@ -8,7 +8,7 @@ use think\queue\Job;
 
 /**
  * 开牌之后 主动设定结束
- * Class UserSettleTaskJob
+ * Class TableEndTaskJob
  * @package app\job
  */
 class TableEndTaskJob

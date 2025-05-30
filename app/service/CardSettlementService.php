@@ -60,26 +60,45 @@ class CardSettlementService extends CardServiceBase
      */
     public function open_game($post, $HeguanLuzhu, $id): string
     {
+        LogHelper::business('=== 开牌服务开始 ===', [
+            'table_id' => $post['table_id'],
+            'game_type' => $post['game_type'],
+            'xue_number' => $post['xue_number'],
+            'pu_number' => $post['pu_number']
+        ]);
+        
+        LogHelper::debug('开牌数据详情', [
+            'system_data' => $post,
+            'heguan_data' => $HeguanLuzhu,
+            'preset_id' => $id
+        ]);
+
         // ========================================
         // 1. 数据库事务处理 - 保存露珠记录
         // ========================================
         $luzhuModel = new Luzhu();
         $save = false;
         
+        LogHelper::debug('开始数据库事务');
         // 开启数据库事务
         Db::startTrans();
         try {
             // 保存系统露珠数据（可能包含预设结果）
             $luzhuModel->save($post);
+            LogHelper::debug('系统露珠保存成功', ['luzhu_id' => $systemLuzhuId]);
             
             // 保存荷官原始露珠数据（真实开牌结果）
             LuzhuHeguan::insert($HeguanLuzhu);
+            LogHelper::debug('荷官露珠保存成功');
             
             $save = true;
             Db::commit();
+            LogHelper::business('露珠数据保存成功', ['luzhu_id' => $systemLuzhuId]);
+
         } catch (\Exception $e) {
             $save = false;
             Db::rollback(); // 这里应该是rollback而不是commit
+            LogHelper::error('露珠数据保存失败', $e);
         }
 
         // ========================================
@@ -89,16 +108,23 @@ class CardSettlementService extends CardServiceBase
         $redis_key = 'table_id_' . $post['table_id'] . '_' . $post['game_type'];
         redis()->set($redis_key, $post['result_pai'], 5);
 
+        LogHelper::debug('Redis开牌缓存设置成功', [
+            'redis_key' => $redis_key,
+            'ttl' => 5
+        ]);
+
         // ========================================
         // 3. 错误处理和状态检查
         // ========================================
         if (!$save) {
+            LogHelper::error('开牌失败 - 数据库保存异常');
             show([], 0, '开牌失败');
         }
 
         // 如果是预设开牌，更新预设状态为已使用
         if ($id > 0) {
             LuzhuPreset::IsStatus($id);
+            LogHelper::business('预设开牌状态更新', ['preset_id' => $id]);
         }
 
         // ========================================
@@ -106,18 +132,28 @@ class CardSettlementService extends CardServiceBase
         // ========================================
         // 调用父类方法保存开牌详细信息
         $this->get_open_pai_info($post['result_pai'], $luzhuModel->id);
+        LogHelper::debug('开牌历史记录保存完成');
 
         // ========================================
         // 5. 异步用户结算任务分发
         // ========================================
         // 添加露珠ID到结算数据中
         $post['luzhu_id'] = $luzhuModel->id;
+
+        LogHelper::business('开始分发结算任务', [
+            'luzhu_id' => $luzhuModel->id,
+            'delay' => 1
+        ]);
         
         // 延迟1秒执行用户结算任务（避免数据冲突）
         $queue = Queue::later(1, UserSettleTaskJob::class, $post, 'bjl_open_queue');
         if ($queue == false) {
+            LogHelper::error('结算任务分发失败');
             show([], 0, 'dismiss job queue went wrong');
         }
+
+        LogHelper::business('结算任务分发成功', ['queue_name' => 'bjl_open_queue']);
+        LogHelper::business('=== 开牌服务完成 ===');
 
         return show([]);
     }
@@ -144,11 +180,22 @@ class CardSettlementService extends CardServiceBase
      */
     public function user_settlement($luzhu_id, $post): bool
     {
+        $startTime = microtime(true);
+        
         // ========================================
         // 1. 查询本局投注记录
         // ========================================
         $oddsModel = new GameRecords();
+
+        LogHelper::business('=== 用户结算开始 ===', [
+            'luzhu_id' => $luzhu_id,
+            'table_id' => $post['table_id'],
+            'xue_number' => $post['xue_number'],
+            'pu_number' => $post['pu_number']
+        ]);
         
+        LogHelper::debug('开始查询投注记录');
+
         // 查询条件：最近1小时内，指定台桌、靴号、铺号的未结算投注
         $betRecords = $oddsModel
             ->whereTime('created_at', date("Y-m-d H:i:s", strtotime("-1 hour")))
@@ -162,10 +209,18 @@ class CardSettlementService extends CardServiceBase
             ->select()
             ->toArray();
 
+        LogHelper::business('投注记录查询完成', [
+            'record_count' => count($betRecords),
+            'sql' => $oddsModel->getLastSql()
+        ]);
+
         // 如果没有投注记录，直接返回成功
         if (empty($betRecords)) {
+            LogHelper::business('无投注记录，结算完成');
             return true;
         }
+
+        LogHelper::debug('投注记录详情', $betRecords);
 
         // ========================================
         // 2. 初始化结算数据容器
@@ -176,9 +231,19 @@ class CardSettlementService extends CardServiceBase
         // ========================================
         // 3. 计算开牌结果
         // ========================================
+        LogHelper::debug('开始计算开牌结果');
+
         $card = new OpenPaiCalculationService();
         $pai_result = $card->runs(json_decode($post['result_pai'], true));
 
+        LogHelper::business('开牌计算完成', [
+            'win_array' => $pai_result['win_array'],
+            'zhuang_point' => $pai_result['zhuang_point'],
+            'xian_point' => $pai_result['xian_point']
+        ]);
+        LogHelper::debug('开牌计算详细结果', $pai_result);
+
+        LogHelper::debug('开始逐笔投注结算');
         // ========================================
         // 4. 遍历投注记录进行结算计算
         // ========================================
@@ -188,6 +253,16 @@ class CardSettlementService extends CardServiceBase
                 intval($value['result']), 
                 $pai_result
             );
+
+            LogHelper::debug('投注结算分析', [
+                'record_id' => $value['id'],
+                'user_id' => $value['user_id'],
+                'bet_type' => $value['result'],
+                'bet_type_name' => $card->user_pai_chinese($value['result']),
+                'bet_amount' => $value['bet_amt'],
+                'odds' => $value['game_peilv'],
+                'is_win' => $user_is_win_or_not
+            ]);
 
             // ========================================
             // 4.1 基础结算信息设置
@@ -318,6 +393,8 @@ class CardSettlementService extends CardServiceBase
         // ========================================
         // 7. 数据库事务处理 - 更新用户余额和投注记录
         // ========================================
+        LogHelper::debug('开始用户余额更新事务');
+
         $UserModel = new UserModel();
         $UserModel->startTrans();
         
@@ -369,13 +446,25 @@ class CardSettlementService extends CardServiceBase
         // ========================================
         // 8. 后续处理任务
         // ========================================
+        LogHelper::debug('开始后续处理任务');
         // 延迟2秒执行资金日志写入任务
         Queue::later(2, BetMoneyLogInsert::class, $post, 'bjl_money_log_queue');
+        LogHelper::debug('资金日志写入任务已加入队列');
 
         // 清理临时投注记录
         GameRecordsTemporary::destroy(function($query) use ($post) {
             $query->where('table_id', $post['table_id']);
         });
+        LogHelper::debug('临时投注记录清理完成');
+
+        $endTime = microtime(true);
+        $duration = round(($endTime - $startTime) * 1000, 2);
+        
+        LogHelper::business('=== 用户结算完成 ===', [
+            'luzhu_id' => $luzhu_id,
+            'duration_ms' => $duration,
+            'memory_usage_mb' => round(memory_get_usage() / 1024 / 1024, 2)
+        ]);
 
         return true;
     }
