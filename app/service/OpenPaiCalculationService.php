@@ -417,8 +417,8 @@ class OpenPaiCalculationService
             8 => '庄',
             9 => '龙7', 
             10 => '熊8', 
-            11 => '小老虎', 
-            12 => '大老虎',
+            11 => '大老虎', 
+            12 => '小老虎',
         ];
         
         return $pai_names[$res] ?? '未知';
