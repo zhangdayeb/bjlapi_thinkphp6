@@ -25,7 +25,7 @@ class Order extends OrderBase
     //用户下注
     public function user_bet_order(): string
     {
-        LogHelper::business('=== 用户下注流程开始 ===', [
+        LogHelper::debug('=== 用户下注流程开始 ===', [
             'user_id' => self::$user['id'],
             'user_balance' => self::$user['money_balance'],
             'ip' => request()->ip()

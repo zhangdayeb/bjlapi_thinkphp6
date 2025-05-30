@@ -1,7 +1,7 @@
 <?php
 
 namespace app\service;
-
+use app\controller\common\LogHelper;
 use think\facade\Db;
 
 /**

@@ -191,8 +191,8 @@ class GetForeignTableInfo extends BaseController
     //获取发送的数据 荷官开牌
     public function set_post_data(): string
     {
-        LogHelper::business('=== 开牌流程开始 ===');
-        LogHelper::info('接收到荷官开牌请求', [
+        LogHelper::debug('=== 开牌流程开始 ===');
+        LogHelper::debug('接收到荷官开牌请求', [
             'ip' => request()->ip(),
             'user_agent' => request()->header('user-agent'),
             'timestamp' => date('Y-m-d H:i:s')
@@ -257,7 +257,7 @@ class GetForeignTableInfo extends BaseController
         // 根据游戏类型调用相应服务
         switch ($map['game_type']) {
             case 3:
-                LogHelper::business('调用百家乐开牌服务', ['table_id' => $map['table_id']]);
+                LogHelper::debug('调用百家乐开牌服务', ['table_id' => $map['table_id']]);
                 $card = new CardSettlementService();
                 return $card->open_game($map, $HeguanLuzhu, $id);
             default:

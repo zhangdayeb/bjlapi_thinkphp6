@@ -16,7 +16,7 @@ class UserSettleTaskJob
 {
     public function fire(Job $job, $data = null)
     {
-        LogHelper::business('=== 结算队列任务开始 ===', [
+        LogHelper::debug('=== 结算队列任务开始 ===', [
             'attempt' => $job->attempts(),
             'max_attempts' => 3,
             'queue_name' => 'bjl_open_queue'
@@ -30,7 +30,7 @@ class UserSettleTaskJob
         $isJobDone = $this->doHelloJob($data);
 
         if ($isJobDone){
-            LogHelper::business('结算队列任务执行成功');
+            LogHelper::debug('结算队列任务执行成功');
             $job->delete();
             return true;
         }
@@ -65,7 +65,7 @@ class UserSettleTaskJob
         $luzhu_id = $data['luzhu_id'];
         unset($data['luzhu_id']);
 
-        LogHelper::business('调用结算服务', ['luzhu_id' => $luzhu_id]);
+        LogHelper::debug('调用结算服务', ['luzhu_id' => $luzhu_id]);
 
         $card_service = new CardSettlementService();
         $res = $card_service->user_settlement($luzhu_id,$data);
@@ -75,7 +75,7 @@ class UserSettleTaskJob
             return false;
         }
 
-        LogHelper::business('结算服务执行成功', ['luzhu_id' => $luzhu_id]);
+        LogHelper::debug('结算服务执行成功', ['luzhu_id' => $luzhu_id]);
         return true;
     }
 }

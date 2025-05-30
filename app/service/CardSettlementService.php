@@ -1,7 +1,7 @@
 <?php
 
 namespace app\service;
-
+use app\controller\common\LogHelper;
 use app\model\GameRecords;
 use app\model\GameRecordsTemporary;
 use app\model\Luzhu;
@@ -60,7 +60,7 @@ class CardSettlementService extends CardServiceBase
      */
     public function open_game($post, $HeguanLuzhu, $id): string
     {
-        LogHelper::business('=== 开牌服务开始 ===', [
+        LogHelper::debug('=== 开牌服务开始 ===', [
             'table_id' => $post['table_id'],
             'game_type' => $post['game_type'],
             'xue_number' => $post['xue_number'],
@@ -93,7 +93,7 @@ class CardSettlementService extends CardServiceBase
             
             $save = true;
             Db::commit();
-            LogHelper::business('露珠数据保存成功', ['luzhu_id' => $systemLuzhuId]);
+            LogHelper::debug('露珠数据保存成功', ['luzhu_id' => $systemLuzhuId]);
 
         } catch (\Exception $e) {
             $save = false;
@@ -124,7 +124,7 @@ class CardSettlementService extends CardServiceBase
         // 如果是预设开牌，更新预设状态为已使用
         if ($id > 0) {
             LuzhuPreset::IsStatus($id);
-            LogHelper::business('预设开牌状态更新', ['preset_id' => $id]);
+            LogHelper::debug('预设开牌状态更新', ['preset_id' => $id]);
         }
 
         // ========================================
@@ -140,7 +140,7 @@ class CardSettlementService extends CardServiceBase
         // 添加露珠ID到结算数据中
         $post['luzhu_id'] = $luzhuModel->id;
 
-        LogHelper::business('开始分发结算任务', [
+        LogHelper::debug('开始分发结算任务', [
             'luzhu_id' => $luzhuModel->id,
             'delay' => 1
         ]);
@@ -152,8 +152,8 @@ class CardSettlementService extends CardServiceBase
             show([], 0, 'dismiss job queue went wrong');
         }
 
-        LogHelper::business('结算任务分发成功', ['queue_name' => 'bjl_open_queue']);
-        LogHelper::business('=== 开牌服务完成 ===');
+        LogHelper::debug('结算任务分发成功', ['queue_name' => 'bjl_open_queue']);
+        LogHelper::debug('=== 开牌服务完成 ===');
 
         return show([]);
     }
@@ -187,7 +187,7 @@ class CardSettlementService extends CardServiceBase
         // ========================================
         $oddsModel = new GameRecords();
 
-        LogHelper::business('=== 用户结算开始 ===', [
+        LogHelper::debug('=== 用户结算开始 ===', [
             'luzhu_id' => $luzhu_id,
             'table_id' => $post['table_id'],
             'xue_number' => $post['xue_number'],
@@ -209,14 +209,14 @@ class CardSettlementService extends CardServiceBase
             ->select()
             ->toArray();
 
-        LogHelper::business('投注记录查询完成', [
+        LogHelper::debug('投注记录查询完成', [
             'record_count' => count($betRecords),
             'sql' => $oddsModel->getLastSql()
         ]);
 
         // 如果没有投注记录，直接返回成功
         if (empty($betRecords)) {
-            LogHelper::business('无投注记录，结算完成');
+            LogHelper::debug('无投注记录，结算完成');
             return true;
         }
 
@@ -236,7 +236,7 @@ class CardSettlementService extends CardServiceBase
         $card = new OpenPaiCalculationService();
         $pai_result = $card->runs(json_decode($post['result_pai'], true));
 
-        LogHelper::business('开牌计算完成', [
+        LogHelper::debug('开牌计算完成', [
             'win_array' => $pai_result['win_array'],
             'zhuang_point' => $pai_result['zhuang_point'],
             'xian_point' => $pai_result['xian_point']
@@ -460,7 +460,7 @@ class CardSettlementService extends CardServiceBase
         $endTime = microtime(true);
         $duration = round(($endTime - $startTime) * 1000, 2);
         
-        LogHelper::business('=== 用户结算完成 ===', [
+        LogHelper::debug('=== 用户结算完成 ===', [
             'luzhu_id' => $luzhu_id,
             'duration_ms' => $duration,
             'memory_usage_mb' => round(memory_get_usage() / 1024 / 1024, 2)

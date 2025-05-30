@@ -49,7 +49,7 @@ $worker->onMessage = function ($connection, $data) {
         $worker->uidConnections[$connection->uid] = $connection;
 
 
-        LogHelper::business('WebSocket用户连接成功', [
+        LogHelper::debug('WebSocket用户连接成功', [
             'uid' => $connection->uid,
             'table_id' => $data['table_id'],
             'game_type' => $data['game_type']

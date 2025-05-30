@@ -4,7 +4,7 @@ namespace app\service;
 
 use app\model\Table;
 use app\model\GameRecords;
-
+use app\controller\common\LogHelper;
 /**
  * ========================================
  * Workerman开牌服务类

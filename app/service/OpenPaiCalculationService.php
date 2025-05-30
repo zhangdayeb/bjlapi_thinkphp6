@@ -1,7 +1,7 @@
 <?php
 
 namespace app\service;
-
+use app\controller\common\LogHelper;
 /**
  * ========================================
  * 百家乐开牌计算服务类
@@ -56,7 +56,7 @@ class OpenPaiCalculationService
         
         $result = $this->calculation_result($calculation_start);
         
-        LogHelper::business('开牌计算完成', [
+        LogHelper::debug('开牌计算完成', [
             'zhuang_point' => $result['zhuang_point'],
             'xian_point' => $result['xian_point'],
             'win_array' => $result['win_array'],
