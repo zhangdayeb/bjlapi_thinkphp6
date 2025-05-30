@@ -7,65 +7,96 @@ namespace app\controller;
 
 use app\controller\common\LogHelper;
 use app\BaseController;
-use app\service\WorkerOpenPaiService;
-use think\Exception;
+use think\facade\Log;
 use think\facade\View;
 
-/**
- * 首页控制器类
- * 继承自BaseController，提供基础的页面展示和Socket通信功能
- */
 class Index extends BaseController
 {
-    /**
-     * 首页方法
-     * 显示开牌数据详情页面
-     * 
-     * @return string 返回渲染后的视图
-     */
     public function index()
     {
-        // 记录调试日志，标记进入开牌数据详情页面
-        LogHelper::debug('开牌数据详情', ['abc','cdf']);
+        // 最简单的测试
+        \think\facade\Log::info('简单测试日志');
         
-        // 返回对应的视图模板
+        // 检查配置
+        $config = config('log');
+        var_dump($config);
+        
+        // 手动创建日志
+        $logFile = runtime_path() . 'log' . DIRECTORY_SEPARATOR . 'manual_test.log';
+        file_put_contents($logFile, date('Y-m-d H:i:s') . " 手动测试\n", FILE_APPEND);
+        
+        echo "日志文件位置: " . $logFile;
+
+        // 测试多种日志记录方式
+        echo "开始测试日志记录..." . PHP_EOL;
+        
+        // 1. 直接使用 ThinkPHP 日志
+        echo "1. 测试直接日志记录" . PHP_EOL;
+        Log::info('直接使用Log::info记录');
+        Log::debug('直接使用Log::debug记录');
+        Log::error('直接使用Log::error记录');
+        
+        // 2. 使用 LogHelper
+        echo "2. 测试LogHelper" . PHP_EOL;
+        LogHelper::debug('LogHelper调试信息', ['test' => 'data']);
+        LogHelper::info('LogHelper信息日志');
+        LogHelper::error('LogHelper错误日志');
+        LogHelper::warning('LogHelper警告日志');
+        LogHelper::business('LogHelper业务日志');
+        
+        // 3. 测试指定通道
+        echo "3. 测试指定通道" . PHP_EOL;
+        Log::channel('debug')->debug('指定debug通道记录');
+        Log::channel('business')->info('指定business通道记录');
+        
+        // 4. 检查环境变量
+        echo "4. 检查环境变量" . PHP_EOL;
+        echo "APP_DEBUG: " . var_export(env('APP_DEBUG'), true) . PHP_EOL;
+        echo "DEBUG_LOG: " . var_export(env('DEBUG_LOG'), true) . PHP_EOL;
+        echo "LOG_LEVEL: " . env('LOG_LEVEL') . PHP_EOL;
+        echo "LOG_CLOSE: " . var_export(env('LOG_CLOSE'), true) . PHP_EOL;
+        
+        // 5. 检查日志配置
+        echo "5. 检查日志配置" . PHP_EOL;
+        $logConfig = config('log');
+        echo "日志配置: " . json_encode($logConfig, JSON_UNESCAPED_UNICODE) . PHP_EOL;
+        
+        echo "测试完成，请检查日志文件" . PHP_EOL;
+        
         return View::fetch();
     }
-
-    /**
-     * 测试方法
-     * 用于测试与WebSocket服务器的通信连接
-     * 通过TCP Socket向本地5678端口发送数据并获取响应
-     * 
-     * @return void 直接输出响应结果
-     */
-    public function test()
+    
+    // 新增测试方法
+    public function testLog()
     {
-        // 创建TCP客户端连接到本地5678端口
-        // 参数说明：
-        // - tcp://127.0.0.1:5678: 目标服务器地址和端口
-        // - $errno: 错误代码（引用传递）
-        // - $errmsg: 错误信息（引用传递）  
-        // - 1: 连接超时时间（秒）
-        $client = stream_socket_client('tcp://127.0.0.1:5678', $errno, $errmsg, 1);
+        // 强制写入测试
+        $logPath = runtime_path() . 'log';
+        if (!is_dir($logPath)) {
+            mkdir($logPath, 0755, true);
+            echo "创建日志目录: " . $logPath . PHP_EOL;
+        }
         
-        // 构造推送数据
-        // 包含uid字段，表示向指定用户推送消息
-        $data = array(
-            'code'    => '202',           // 响应状态码
-            'user_id' => 123456,          // 目标用户ID
-            'data'    => []               // 推送的具体数据内容
-        );
+        $debugPath = $logPath . DIRECTORY_SEPARATOR . 'debug';
+        if (!is_dir($debugPath)) {
+            mkdir($debugPath, 0755, true);
+            echo "创建调试日志目录: " . $debugPath . PHP_EOL;
+        }
         
-        // 发送JSON格式数据到服务器
-        // 注意：5678端口使用Text协议，需要在数据末尾添加换行符(\n)
-        fwrite($client, json_encode($data) . "\n");
+        // 直接写入文件测试
+        $testFile = $debugPath . DIRECTORY_SEPARATOR . 'test_' . date('Y_m_d') . '.log';
+        file_put_contents($testFile, date('Y-m-d H:i:s') . " 手动测试日志写入\n", FILE_APPEND);
+        echo "手动写入测试文件: " . $testFile . PHP_EOL;
         
-        // 读取服务器响应结果并直接输出
-        // 最多读取8192字节的数据
-        echo fread($client, 8192);
+        // 测试各种日志级别
+        Log::debug('测试debug级别日志');
+        Log::info('测试info级别日志');
+        Log::warning('测试warning级别日志');
+        Log::error('测试error级别日志');
         
-        // 注意：这里应该添加socket连接的关闭和错误处理
-        // fclose($client);
+        // 检查是否有权限问题
+        echo "日志目录权限: " . substr(sprintf('%o', fileperms($logPath)), -4) . PHP_EOL;
+        echo "调试目录权限: " . substr(sprintf('%o', fileperms($debugPath)), -4) . PHP_EOL;
+        
+        return "日志测试完成，请查看输出信息";
     }
 }

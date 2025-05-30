@@ -111,9 +111,6 @@ Route::rule('bjl/get_table/post_data_test$', '/game.GetForeignTableInfo/set_post
 // 首页路由
 Route::rule('/$', '/index/index');
 
-// 系统测试页面
-Route::rule('/test$', '/index/test');
-
 // 404错误处理（无效路由统一返回）
 Route::miss(function() {
     return show([], 404, '无效路由地址');
