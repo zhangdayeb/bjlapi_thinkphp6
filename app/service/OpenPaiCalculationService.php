@@ -290,32 +290,6 @@ class OpenPaiCalculationService
         $res['lucky'] = $res['lucky'] % 10;
 
         // ========================================
-        // 胜负判断逻辑  原始代码备份
-        // ========================================
-        // $win = 0;   // 主结果：1=庄赢, 2=闲赢, 3=和牌, 0=错误
-        // $lucky = 0; // 幸运6结果：0=否, 1=是
-
-        // if (intval($res['zhuang_point']) === intval($res['xian_point'])) {
-        //     // 点数相等 = 和牌
-        //     $win = 3;
-        // } elseif (intval($res['zhuang_point']) > intval($res['xian_point'])) {
-        //     // 庄家点数大 = 庄赢
-        //     $win = 1;
-            
-        //     // 幸运6判断：庄赢且庄家点数为6点
-        //     if (intval($res['lucky']) === 6) {
-        //         $lucky = 1;
-        //     }
-        // } elseif (intval($res['zhuang_point']) < intval($res['xian_point'])) {
-        //     // 闲家点数大 = 闲赢
-        //     $win = 2;
-        // }
-
-        // // 更新结果到数组中
-        // $res['win'] = $win;
-        // $res['lucky'] = $lucky;
-
-        // ========================================
         // 胜负判断逻辑  新的逻辑 支持 庄 闲 和 幸运6(单双) 龙7 熊8 大小老虎 也就是说
         // 这里 win_array 添加的 数字 是 ntp_dianji_game_peilv 赔率表里面的ID 根据用户迎娶的选项 去 计算赔率 金钱这些
         // ========================================
@@ -345,12 +319,23 @@ class OpenPaiCalculationService
             // 庄家点数大 == 庄赢
             $win_array[] = 8;
         }
-        if ((intval($res['zhuang_point']) > intval($res['xian_point'])) && (intval($res['zhuang_point']) === 7)) {
-            // 庄家点数大 == 庄赢 龙7
+        // ========================================
+        // 修正：龙7判断 - 庄7点赢且庄家有3张牌
+        // ========================================
+        if ((intval($res['zhuang_point']) > intval($res['xian_point'])) 
+            && (intval($res['zhuang_point']) === 7) 
+            && (intval($res['zhuang_count']) === 3)) {
+            // 庄家点数大 == 庄赢 且 庄7点 且 庄家3张牌 = 龙7
             $win_array[] = 9;
-        }        
-        if ((intval($res['zhuang_point']) < intval($res['xian_point'])) && (intval($res['xian_point']) === 8) ) {
-            // 闲家点数大 == 闲赢 熊8
+        }
+        
+        // ========================================
+        // 修正：熊8判断 - 闲8点赢且闲家有3张牌
+        // ========================================        
+        if ((intval($res['zhuang_point']) < intval($res['xian_point'])) 
+            && (intval($res['xian_point']) === 8) 
+            && (intval($res['xian_count']) === 3)) {
+            // 闲家点数大 == 闲赢 且 闲8点 且 闲家3张牌 = 熊8
             $win_array[] = 10;
         }
         if (intval($res['lucky']) === 6 && intval($res['luckySize']) ===2 ) {

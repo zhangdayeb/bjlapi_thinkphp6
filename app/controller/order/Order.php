@@ -66,14 +66,15 @@ class Order extends OrderBase
 
         #########查询是否当前局下注过############下注过取当前局的下注免佣状态，没下注过取传过来的免佣状态
         $is_exempt = $this->request->param('is_exempt', 0);//免佣状态。默认关闭
-        // 增加非免佣状态 判断  : 非免佣 禁止 投注幸运6
-        if ($is_exempt == 0) {
-            foreach ($post as $key => $value) {
-                if ($value['rate_id'] == 3) {
-                    show([], config('ToConfig.http_code.error'), 'this status cant use luck6');
-                }
-            }
-        }
+        // 增加非免佣状态 判断  : 非免佣 禁止 投注幸运6 
+        // 客户要求取消 先注释 阻止了
+        // if ($is_exempt == 0) {
+        //     foreach ($post as $key => $value) {
+        //         if ($value['rate_id'] == 3) {
+        //             show([], config('ToConfig.http_code.error'), 'this status cant use luck6');
+        //         }
+        //     }
+        // }
         //查询是否已经购买过一次 当前局   // 101 没下单过.不是101表示下注过，返回当前下注免佣状态
         $is_order = GameRecordsTemporary::user_status_bureau_number_is_exempt($table_id, $xue_number, self::$user, true);
         // $is_exempt = $is_order == 101 ? $is_exempt : $is_order;

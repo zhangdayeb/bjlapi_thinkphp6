@@ -131,13 +131,32 @@ class GetForeignTableInfo extends BaseController
         $map['xue_number'] = $params['xue'];
         $map['game_type'] = $params['gameType']; // 代表百家乐
 
+        $nowTime = time();
+		$startTime = strtotime(date("Y-m-d 09:00:00", time()));
+		// 如果小于，则算前一天的
+		if ($nowTime < $startTime) {
+		    $startTime = $startTime - (24 * 60 * 60);
+		} else {
+		    // 保持不变 这样做到 自动更新 露珠
+		}
+
+        // 需要兼容 龙7 熊8 大小老虎 69 幸运6 
         $returnData = array();
-        $returnData['zhuang'] = Luzhu::whereTime('create_time', 'today')->where('result', 'like', '1|%')->where($map)->order('id asc')->count();
-        $returnData['xian'] = Luzhu::whereTime('create_time', 'today')->where('result', 'like', '2|%')->where($map)->order('id asc')->count();
-        $returnData['he'] = Luzhu::whereTime('create_time', 'today')->where('result', 'like', '3|%')->where($map)->order('id asc')->count();
-        $returnData['zhuangDui'] = Luzhu::whereTime('create_time', 'today')->where('result', 'like', '%|1')->where($map)->order('id asc')->count();
-        $returnData['xianDui'] = Luzhu::whereTime('create_time', 'today')->where('result', 'like', '%|2')->where($map)->order('id asc')->count();
-        $returnData['zhuangXianDui'] = Luzhu::whereTime('create_time', 'today')->where('result', 'like', '%|3')->where($map)->order('id asc')->count();
+        $returnData_zhuang_1 = Luzhu::whereTime('create_time','>=', date('Y-m-d H:i:s',$startTime))->where('result', 'like', '1|%')->where($map)->order('id asc')->count();
+        $returnData_zhuang_4 = Luzhu::whereTime('create_time','>=', date('Y-m-d H:i:s',$startTime))->where('result', 'like', '4|%')->where($map)->order('id asc')->count();
+        $returnData_zhuang_6 = Luzhu::whereTime('create_time','>=', date('Y-m-d H:i:s',$startTime))->where('result', 'like', '6|%')->where($map)->order('id asc')->count();
+        $returnData_zhuang_7 = Luzhu::whereTime('create_time','>=', date('Y-m-d H:i:s',$startTime))->where('result', 'like', '7|%')->where($map)->order('id asc')->count();
+        $returnData_zhuang_9 = Luzhu::whereTime('create_time','>=', date('Y-m-d H:i:s',$startTime))->where('result', 'like', '9|%')->where($map)->order('id asc')->count();
+		$returnData['zhuang'] = $returnData_zhuang_1 + $returnData_zhuang_4 + $returnData_zhuang_6 + $returnData_zhuang_7 + $returnData_zhuang_9;
+
+        $returnData_xian_2 = Luzhu::whereTime('create_time','>=', date('Y-m-d H:i:s',$startTime))->where('result', 'like', '2|%')->where($map)->order('id asc')->count();
+        $returnData_xian_8 = Luzhu::whereTime('create_time','>=', date('Y-m-d H:i:s',$startTime))->where('result', 'like', '8|%')->where($map)->order('id asc')->count();
+        $returnData['xian'] = $returnData_xian_2 + $returnData_xian_8;
+
+        $returnData['he'] = Luzhu::whereTime('create_time','>=', date('Y-m-d H:i:s',$startTime))->where('result', 'like', '3|%')->where($map)->order('id asc')->count();
+        $returnData['zhuangDui'] = Luzhu::whereTime('create_time','>=', date('Y-m-d H:i:s',$startTime))->where('result', 'like', '%|1')->where($map)->order('id asc')->count();
+        $returnData['xianDui'] = Luzhu::whereTime('create_time','>=', date('Y-m-d H:i:s',$startTime))->where('result', 'like', '%|2')->where($map)->order('id asc')->count();
+        $returnData['zhuangXianDui'] = Luzhu::whereTime('create_time','>=', date('Y-m-d H:i:s',$startTime))->where('result', 'like', '%|3')->where($map)->order('id asc')->count();
         $returnData['zhuangDui'] += $returnData['zhuangXianDui'];
         $returnData['xianDui'] += $returnData['zhuangXianDui'];
         // 返回数据
