@@ -7,15 +7,16 @@ use app\model\Table;
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 // 初始化一个worker容器，监听1234端口
-//,$context
 $worker = new Worker(env('worker.one', 'websocket://0.0.0.0:2003'));
-
 // ====这里进程数必须必须必须设置为1====
 $worker->count = 1;
 // 新增加一个属性，用来保存uid到connection的映射(uid是用户id或者客户端唯一标识)
 $worker->uidConnections = array();
 // 当有客户端发来消息时执行的回调函数
 $worker->onMessage = function ($connection, $data) {
+    if($data == 'ping'){
+        return $connection->send('pong');
+    }
     global $worker;
     static $request_count;
     // 业务处理略

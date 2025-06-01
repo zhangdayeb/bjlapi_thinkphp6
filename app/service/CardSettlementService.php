@@ -1,6 +1,7 @@
 <?php
 
 namespace app\service;
+
 use app\controller\common\LogHelper;
 use app\model\GameRecords;
 use app\model\GameRecordsTemporary;
@@ -13,7 +14,7 @@ use app\job\UserSettleTaskJob;
 use think\db\exception\DbException;
 use think\facade\Db;
 use think\facade\Queue;
-
+use app\model\MoneyLog;
 /**
  * ========================================
  * 卡牌游戏结算服务类
@@ -23,7 +24,7 @@ use think\facade\Queue;
  * - 处理游戏开牌后的完整结算流程
  * - 管理用户投注记录和资金变动
  * - 计算游戏胜负和赔付金额
- * - 处理洗码费和代理分成
+ * - 处理洗码费和代理分成（输了才给洗码费）
  * - 维护露珠历史记录
  * 
  * 结算流程：
@@ -80,6 +81,7 @@ class CardSettlementService extends CardServiceBase
         $save = false;
         
         LogHelper::debug('开始数据库事务');
+        
         // 开启数据库事务
         Db::startTrans();
         try {
@@ -91,10 +93,10 @@ class CardSettlementService extends CardServiceBase
             
             $save = true;
             Db::commit();
-
         } catch (\Exception $e) {
             $save = false;
-            Db::rollback(); // 这里应该是rollback而不是commit
+            Db::rollback();
+            LogHelper::error('开牌数据保存失败', $e);
         }
 
         // ========================================
@@ -160,13 +162,20 @@ class CardSettlementService extends CardServiceBase
      * 处理指定局次的所有用户投注结算，包括输赢计算、
      * 资金变动、洗码费处理等完整的结算流程
      * 
+     * 洗码费规则（新规则）：
+     * ✅ 输钱 + 非免佣：正常给洗码费
+     * ❌ 中奖：不给洗码费
+     * ❌ 输钱 + 免佣：不给洗码费
+     * ❌ 和局：不给洗码费
+     * 
      * 结算逻辑：
      * 1. 查询本局所有投注记录
      * 2. 计算每笔投注的输赢结果
      * 3. 处理特殊赔率（幸运6、免佣庄等）
-     * 4. 更新用户账户余额
-     * 5. 记录资金流水日志
-     * 6. 缓存派彩结果供客户端显示
+     * 4. 根据输赢结果计算洗码费
+     * 5. 更新用户账户余额
+     * 6. 记录资金流水日志
+     * 7. 缓存派彩结果供客户端显示
      * 
      * @param int $luzhu_id 露珠记录ID
      * @param array $post 开牌数据
@@ -238,6 +247,7 @@ class CardSettlementService extends CardServiceBase
         LogHelper::debug('开牌计算详细结果', $pai_result);
 
         LogHelper::debug('开始逐笔投注结算');
+
         // ========================================
         // 4. 遍历投注记录进行结算计算
         // ========================================
@@ -281,9 +291,8 @@ class CardSettlementService extends CardServiceBase
             // ========================================
             $tempPelv = $value['game_peilv']; // 默认赔率
 
-            // 用户投注幸运 6
+            // 用户投注幸运6：根据庄家牌数选择赔率
             if ($value['result'] == 3) {
-                // 幸运6特殊处理：根据庄家牌数选择赔率
                 $pei_lv = explode('/', $value['game_peilv']); // 格式：12/20
                 if ($pai_result['luckySize'] == 2) {
                     $tempPelv = intval($pei_lv[0]); // 2张牌赔率
@@ -291,7 +300,8 @@ class CardSettlementService extends CardServiceBase
                     $tempPelv = intval($pei_lv[1]); // 3张牌赔率
                 }
             }
-            // 用户投注庄 当局结果幸运6 并且开了免佣
+
+            // 用户投注庄：免佣庄特殊处理
             if ($value['result'] == 8) {
                 // 免佣庄特殊处理：庄6点赢只赔50%
                 if ($value['is_exempt'] == 1 && $pai_result['zhuang_point'] == 6) {
@@ -303,7 +313,23 @@ class CardSettlementService extends CardServiceBase
             $moneyWinTemp = $tempPelv * $value['bet_amt']; // 中奖金额 = 赔率 × 本金
 
             // ========================================
-            // 4.3 输赢结算处理
+            // 4.3 洗码费计算（新规则：输了才给）
+            // ========================================
+            $rebateResult = $this->calculateRebate($value, $user_is_win_or_not, $pai_result);
+            $dataSaveRecords[$key]['shuffling_amt'] = $rebateResult['shuffling_amt'];
+            $dataSaveRecords[$key]['shuffling_num'] = $rebateResult['shuffling_num'];
+
+            LogHelper::debug('洗码费计算结果', [
+                'user_id' => $value['user_id'],
+                'bet_amt' => $value['bet_amt'],
+                'is_win' => $user_is_win_or_not,
+                'is_exempt' => $value['is_exempt'],
+                'shuffling_amt' => $rebateResult['shuffling_amt'],
+                'shuffling_num' => $rebateResult['shuffling_num']
+            ]);
+            
+            // ========================================
+            // 4.4 输赢结算处理
             // ========================================
             if ($user_is_win_or_not) {
                 // --- 中奖处理 ---
@@ -317,11 +343,17 @@ class CardSettlementService extends CardServiceBase
                     'win'                    => $moneyWinTemp,
                     'bet_amt'                => $value['bet_amt'],
                 ];
+
+                LogHelper::debug('中奖处理', [
+                    'user_id' => $value['user_id'],
+                    'win_amt' => $moneyWinTemp,
+                    'return_amt' => $dataSaveRecords[$key]['delta_amt']
+                ]);
             } else {
                 // --- 未中奖处理 ---
-                // if ($pai_result['win'] == 3) {
-                // 和局特殊处理 庄闲幸运6 退回 大小老虎 龙7熊8 没有退回
-                if (in_array(3,$pai_result['win_array'])) {
+                $is_tie = in_array(3, $pai_result['win_array']); // 是否和局
+
+                if ($is_tie) {
                     // 和局特殊处理：庄闲投注退回本金
                     if ($value['result'] == 8 || $value['result'] == 6) {
                         $userSaveDataTemp[$key] = [
@@ -334,15 +366,31 @@ class CardSettlementService extends CardServiceBase
                         $dataSaveRecords[$key]['win_amt'] = 0;
                         $dataSaveRecords[$key]['delta_amt'] = 0;
                         $dataSaveRecords[$key]['agent_status'] = 1;
-                        $dataSaveRecords[$key]['shuffling_amt'] = 0;
-                        $dataSaveRecords[$key]['shuffling_num'] = 0;
+                        $dataSaveRecords[$key]['shuffling_amt'] = 0;  // 和局无洗码费
+                        $dataSaveRecords[$key]['shuffling_num'] = 0;  // 和局无洗码量
+
+                        LogHelper::debug('和局退款处理', [
+                            'user_id' => $value['user_id'],
+                            'refund_amt' => $value['bet_amt']
+                        ]);
                     } else {
                         // 其他投注类型输掉本金
                         $dataSaveRecords[$key]['win_amt'] = $value['bet_amt'] * -1;
+
+                        LogHelper::debug('和局其他投注输钱', [
+                            'user_id' => $value['user_id'],
+                            'loss_amt' => $value['bet_amt']
+                        ]);
                     }
                 } else {
                     // 正常输牌：输掉本金
                     $dataSaveRecords[$key]['win_amt'] = $value['bet_amt'] * -1;
+
+                    LogHelper::debug('正常输牌处理', [
+                        'user_id' => $value['user_id'],
+                        'loss_amt' => $value['bet_amt'],
+                        'rebate_amt' => $dataSaveRecords[$key]['shuffling_amt']
+                    ]);
                 }
             }
         }
@@ -431,9 +479,24 @@ class CardSettlementService extends CardServiceBase
                 $oddsModel->saveAll($dataSaveRecords);
             }
 
+            
+            // ========================================
+            // 7.1. 自动累计用户洗码费
+            // ========================================
+            try {
+                $this->accumulateUserRebate($dataSaveRecords);
+                LogHelper::debug('洗码费累计完成');
+            } catch (\Exception $e) {
+                LogHelper::error('洗码费累计失败', $e);
+                // 不影响主流程，只记录错误
+            }
+
             $UserModel->commit();
+            LogHelper::debug('用户余额更新事务完成');
+
         } catch (DbException $e) {
             $UserModel->rollback();
+            LogHelper::error('用户余额更新失败', $e);
             return false;
         }
 
@@ -441,6 +504,7 @@ class CardSettlementService extends CardServiceBase
         // 8. 后续处理任务
         // ========================================
         LogHelper::debug('开始后续处理任务');
+        
         // 延迟2秒执行资金日志写入任务
         Queue::later(2, BetMoneyLogInsert::class, $post, 'bjl_money_log_queue');
         LogHelper::debug('资金日志写入任务已加入队列');
@@ -460,7 +524,109 @@ class CardSettlementService extends CardServiceBase
             'memory_usage_mb' => round(memory_get_usage() / 1024 / 1024, 2)
         ]);
 
+
+
         return true;
+    }
+
+    /**
+     * ========================================
+     * 根据输赢结果计算洗码费（新规则）
+     * ========================================
+     * 
+     * 洗码费规则：
+     * ✅ 输钱 + 非免佣：正常给洗码费
+     * ❌ 中奖：不给洗码费
+     * ❌ 输钱 + 免佣：不给洗码费  
+     * ❌ 和局：不给洗码费
+     * 
+     * @param array $record 投注记录
+     * @param bool $is_win 是否中奖
+     * @param array $pai_result 开牌结果
+     * @return array 包含洗码费和洗码量的数组
+     */
+    private function calculateRebate($record, $is_win, $pai_result): array
+    {
+        $is_tie = in_array(3, $pai_result['win_array']); // 是否和局
+
+        // 中奖：无洗码费
+        if ($is_win) {
+            return ['shuffling_amt' => 0, 'shuffling_num' => 0];
+        }
+
+        // 和局：庄闲投注退款，其他投注输钱但不给洗码费
+        if ($is_tie) {
+            return ['shuffling_amt' => 0, 'shuffling_num' => 0];
+        }
+        
+        // 免佣模式：无洗码费
+        if ($record['is_exempt'] == 1) {
+            return ['shuffling_amt' => 0, 'shuffling_num' => 0];
+        }
+        
+        // 非免佣模式且输钱：计算洗码费
+        $shuffling_rate = $record['shuffling_rate'] ?? 0.008; // 默认0.8%洗码率
+        return [
+            'shuffling_amt' => $record['bet_amt'] * $shuffling_rate,
+            'shuffling_num' => $record['bet_amt']
+        ];
+    }
+
+    /**
+     * 自动累计用户洗码费到用户表
+     * @param array $dataSaveRecords 结算记录数组
+     */
+    private function accumulateUserRebate($dataSaveRecords)
+    {
+        // 按用户汇总洗码费
+        $userRebates = [];
+        foreach ($dataSaveRecords as $record) {
+            if ($record['shuffling_amt'] > 0) {
+                $userId = $record['user_id'];
+                if (!isset($userRebates[$userId])) {
+                    $userRebates[$userId] = 0;
+                }
+                $userRebates[$userId] += $record['shuffling_amt'];
+            }
+        }
+        
+        // 批量更新用户洗码费
+        if (!empty($userRebates)) {
+            LogHelper::debug('开始累计用户洗码费', [
+                'user_count' => count($userRebates),
+                'total_rebate' => array_sum($userRebates)
+            ]);
+
+            foreach ($userRebates as $userId => $totalRebate) {
+                // 更新用户洗码费余额和累计洗码费
+                UserModel::where('id', $userId)
+                    ->inc('rebate_balance', $totalRebate)
+                    ->inc('rebate_total', $totalRebate)
+                    ->update();
+                
+                // 记录洗码费流水
+                $this->recordRebateLog($userId, $totalRebate);
+            }
+        }
+    }
+    /**
+     * 记录洗码费流水日志
+     * @param int $userId 用户ID
+     * @param float $amount 洗码费金额
+     */
+    private function recordRebateLog($userId, $amount)
+    {
+        MoneyLog::insert([
+            'uid' => $userId,
+            'type' => 1,
+            'status' => 600, // 洗码费自动累计
+            'money' => $amount,
+            'money_before' => 0, // 洗码费余额变动
+            'money_end' => $amount,
+            'source_id' => 0,
+            'mark' => '系统自动累计洗码费',
+            'create_time' => date('Y-m-d H:i:s')
+        ]);
     }
 }
 
@@ -482,6 +648,7 @@ class CardSettlementService extends CardServiceBase
  *    - 幸运6：根据庄家牌数选择不同赔率
  *    - 免佣庄：庄6点赢只赔50%
  *    - 和局：庄闲投注退回本金
+ *    - 洗码费：只有输钱且非免佣才给洗码费
  * 
  * 4. 性能优化：
  *    - 批量数据库操作减少IO次数
@@ -492,4 +659,9 @@ class CardSettlementService extends CardServiceBase
  *    - 完整的异常捕获和事务回滚
  *    - 队列任务失败重试机制
  *    - 数据校验和边界条件处理
+ * 
+ * 6. 洗码费新规则：
+ *    - 只有用户输钱且选择非免佣模式时才给洗码费
+ *    - 中奖、和局、免佣模式下都不给洗码费
+ *    - 通过calculateRebate()方法统一处理洗码费逻辑
  */

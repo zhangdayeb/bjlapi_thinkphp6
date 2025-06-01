@@ -181,7 +181,7 @@ class Order extends OrderBase
                 //是否开启免佣。开起来没有洗码费
                 //洗码费[返佣] 不等于 洗码量[流水]
                 'shuffling_num' => $value['money'],                                                     // 洗码量
-                'shuffling_amt' => $is_exempt == 1 ? 0 : $value['money'] * self::$user['xima_lv'] / 100,// 洗码费   用户的显示是按照 百分比显示的
+                'shuffling_amt' => 0,                                                                   // 下注时先不计算，等结算时再算
                 'result' => $value['rate_info_id'],                                                     // 下注结果ID
                 'shuffling_rate' => self::$user['xima_lv'] / 100,                                       // 洗码率
                 'delta_amt' => -$value['money'],                                                        // 变化金额
