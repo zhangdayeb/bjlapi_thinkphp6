@@ -289,7 +289,7 @@ class CardSettlementService extends CardServiceBase
             // ========================================
             // 4.2 特殊赔率预处理
             // ========================================
-            $tempPelv = $value['game_peilv']; // 默认赔率
+            $tempPelv = intval($value['game_peilv']); // 默认赔率
 
             // 用户投注幸运6：根据庄家牌数选择赔率
             if ($value['result'] == 3) {
@@ -318,7 +318,7 @@ class CardSettlementService extends CardServiceBase
 
             $dataSaveRecords[$key]['game_peilv'] = $tempPelv;
             // 就是因为 押了庄才出现的问题
-            $moneyWinTemp = intval($tempPelv) * $value['bet_amt']; // 中奖金额 = 赔率 × 本金
+            $moneyWinTemp = $tempPelv * $value['bet_amt']; // 中奖金额 = 赔率 × 本金
 
             // ========================================
             // 4.3 洗码费计算（新规则：输了才给）

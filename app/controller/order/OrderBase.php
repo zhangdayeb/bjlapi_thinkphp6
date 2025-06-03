@@ -25,6 +25,11 @@ class OrderBase extends Base
     {
         //查询用户本次赔率下注的金额//当前赔率本次下注 加上前面下注
         $money = $value['money'];
+        $limit_long_7_min = 20;
+        $limit_long_7_max = 300;
+        $limit_xiong_8_min = 20;
+        $limit_xiong_8_max = 300;
+        $tip = '超过限红设置';
         //用户限红
         if (isset(self::$user['is_xian_hong']) && self::$user['is_xian_hong'] == 1){
             switch ($odds->id) {
@@ -54,6 +59,17 @@ class OrderBase extends Base
                     if ($money < self::$user['bjl_xian_hong_zhuang_min']) show([], config('ToConfig.http_code.error'), lang('limit red and zhuang bet least') . ':' . self::$user['bjl_xian_hong_zhuang_min']);
                     if ($money > self::$user['bjl_xian_hong_zhuang_max']) show([], config('ToConfig.http_code.error'), lang('limit red and zhuang bet most') . ':' . self::$user['bjl_xian_hong_zhuang_max']);
                     break;
+
+                // 客户新增 临时 限红    9 龙7 10 熊8
+                case 9://百家乐 庄
+                    if ($money < $limit_long_7_min) show([], config('ToConfig.http_code.error'), $tip);
+                    if ($money > $limit_long_7_max) show([], config('ToConfig.http_code.error'), $tip);
+                    break;
+                case 10://百家乐 庄
+                    if ($money < $limit_long_8_min) show([], config('ToConfig.http_code.error'), $tip);
+                    if ($money > $limit_long_8_max) show([], config('ToConfig.http_code.error'), $tip);
+                    break;
+                    
             }
             return true;
         }
@@ -86,6 +102,16 @@ class OrderBase extends Base
                 case 8://百家乐 庄
                     if ($money < $table_info['bjl_xian_hong_zhuang_min']) show([], config('ToConfig.http_code.error'), lang('limit red and zhuang bet least') . ':' . $table_info['bjl_xian_hong_zhuang_min']);
                     if ($money > $table_info['bjl_xian_hong_zhuang_max']) show([], config('ToConfig.http_code.error'), lang('limit red and zhuang bet most') . ':' . $table_info['bjl_xian_hong_zhuang_max']);
+                    break;
+
+                // 客户新增 临时 限红    9 龙7 10 熊8
+                case 9://百家乐 庄
+                    if ($money < $limit_long_7_min) show([], config('ToConfig.http_code.error'), $tip);
+                    if ($money > $limit_long_7_max) show([], config('ToConfig.http_code.error'), $tip);
+                    break;
+                case 10://百家乐 庄
+                    if ($money < $limit_long_8_min) show([], config('ToConfig.http_code.error'), $tip);
+                    if ($money > $limit_long_8_max) show([], config('ToConfig.http_code.error'), $tip);
                     break;
             }
             return true;

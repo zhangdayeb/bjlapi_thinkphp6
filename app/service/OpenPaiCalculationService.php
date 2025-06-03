@@ -140,19 +140,23 @@ class OpenPaiCalculationService
         // ========================================
         
         // 判断幸运6的牌数（如果庄家第三张牌存在）
-        if (isset($data[1]) && $data[1][0] != 0) {
+        if ($data[1][0] != 0 && $data[2][0] != 0 && $data[3][0] != 0) {
             $luckySize = 3; // 庄家有3张牌
         }
 
         // 判断庄对：比较庄家前两张牌的牌值
-        // 位置 1,2 是主牌 3 是补牌
-        if (isset($data[1], $data[2]) && $data[1][0] === $data[2][0]) {
-            $zhuang_dui = 1;
+        // 位置 1,2 是主牌 3 是补牌  
+        if (isset($data[1], $data[2])) {
+            if( ($data[1][0] === $data[2][0])){
+                $zhuang_dui = 1;
+            }            
         }
 
         // 判断闲对：比较闲家前两张牌的牌值
-        if (isset($data[4], $data[5]) && $data[4][0] === $data[5][0]) {
-            $xian_dui = 1;
+        if (isset($data[4], $data[5])) {
+            if( ($data[4][0] === $data[5][0]) ){
+                $xian_dui = 1;
+            }   
         }
 
         // ========================================
