@@ -62,8 +62,8 @@ class OpenPaiCalculationService
             'win_array' => $result['win_array'],
             'win_types' => array_map([$this, 'user_pai_chinese'], $result['win_array'])
         ]);
-        
-        LogHelper::debug('最终计算结果', $result);
+        LogHelper::debug('===============================最终计算结果==========================================');  
+        LogHelper::debug(json_encode($result));
         LogHelper::debug('=== 开牌计算完成 ===');
         
         return $result;
@@ -145,7 +145,8 @@ class OpenPaiCalculationService
         }
 
         // 判断庄对：比较庄家前两张牌的牌值
-        if (isset($data[2], $data[3]) && $data[2][0] === $data[3][0]) {
+        // 位置 1,2 是主牌 3 是补牌
+        if (isset($data[1], $data[2]) && $data[1][0] === $data[2][0]) {
             $zhuang_dui = 1;
         }
 

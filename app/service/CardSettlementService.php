@@ -304,13 +304,21 @@ class CardSettlementService extends CardServiceBase
             // 用户投注庄：免佣庄特殊处理
             if ($value['result'] == 8) {
                 // 免佣庄特殊处理：庄6点赢只赔50%
-                if ($value['is_exempt'] == 1 && $pai_result['zhuang_point'] == 6) {
-                    $tempPelv = 0.5;
+                if ($value['is_exempt'] == 1 ) {
+                    if($pai_result['zhuang_point'] == 6){
+                        $tempPelv = 0.5;
+                    }else{
+                        $tempPelv = 1;
+                    }
+                    
+                }else{
+                    $tempPelv = 0.95;
                 }
             }
 
             $dataSaveRecords[$key]['game_peilv'] = $tempPelv;
-            $moneyWinTemp = $tempPelv * $value['bet_amt']; // 中奖金额 = 赔率 × 本金
+            // 就是因为 押了庄才出现的问题
+            $moneyWinTemp = 1 * $tempPelv * $value['bet_amt']; // 中奖金额 = 赔率 × 本金
 
             // ========================================
             // 4.3 洗码费计算（新规则：输了才给）

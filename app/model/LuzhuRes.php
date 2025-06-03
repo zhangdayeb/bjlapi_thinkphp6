@@ -30,13 +30,11 @@ class LuzhuRes extends Model
         if(time() > strtotime(date('Y-m-d'.' 09:00:00'))){
             $date = date('Y-m-d'.' 09:00:00');
         }
-        LogHelper::debug('=== 查询条件 ===',$map);
-        // $s = self::whereTime('create_time','>', $date)->fetchSql(true)->cache('luzhuinfo_'.$map['table_id'],60)->where('result','<>',0)->where($map)->order('id asc')->limit($limit)->select();
-        // LogHelper::debug('=== 查询条件 ===',$s);
+        // LogHelper::debug('=== 查询条件 ===',$map);
         $info = self::whereTime('create_time','>', $date)->where('result','<>',0)->where($map)->order('id asc')->limit($limit)->select();
-        // $info = self::whereTime('create_time','>', $date)->cache('luzhuinfo_'.$map['table_id'],60)->where('result','<>',0)->where($map)->order('id asc')->limit($limit)->select();
-       
+     
         // 发给前台的 数据
+        // LogHelper::debug('=== 查询条件 ===',json_encode($info));
         $i = 0;
         foreach ($info as $k => $val) {
             $tmp = array();
@@ -49,6 +47,7 @@ class LuzhuRes extends Model
                 $i++;
             }
         }
+        
         return $returnData;
     }
     

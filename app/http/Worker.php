@@ -1,5 +1,5 @@
 <?php
-
+use app\controller\common\LogHelper;
 use Workerman\Worker;
 use \Workerman\Lib\Timer;
 use \app\service\CardSettlementService;
@@ -28,6 +28,9 @@ $worker->onMessage = function ($connection, $data) {
     $data = json_decode($data, true);
     // 判断当前客户端是否已经验证,即是否设置了uid
     if (!isset($connection->uid)) {
+        // 获取右侧台桌信息 
+
+        // 原先的逻辑
         $connection->lastMessageTime = time();
 
         if (!isset($data['user_id']) || empty($data['user_id'])) {
@@ -95,7 +98,7 @@ $worker->onWorkerStart = function ($worker) {
     $inner_text_worker->listen();
     ##############################################################################
 
-
+    // 每秒执行的倒计时 
     Timer::add(1, function () use ($worker) {
         //获取台桌开牌信息
         $newOpen = new CardSettlementService();
