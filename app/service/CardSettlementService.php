@@ -318,7 +318,7 @@ class CardSettlementService extends CardServiceBase
 
             $dataSaveRecords[$key]['game_peilv'] = $tempPelv;
             // 就是因为 押了庄才出现的问题
-            $moneyWinTemp = 1 * $tempPelv * $value['bet_amt']; // 中奖金额 = 赔率 × 本金
+            $moneyWinTemp = intval($tempPelv) * $value['bet_amt']; // 中奖金额 = 赔率 × 本金
 
             // ========================================
             // 4.3 洗码费计算（新规则：输了才给）
