@@ -359,7 +359,7 @@ class CardSettlementService extends CardServiceBase
                 ]);
             } else {
                 // --- 未中奖处理 ---
-                $is_tie = in_array(3, $pai_result['win_array']); // 是否和局
+                $is_tie = in_array(7, $pai_result['win_array']); // 是否和局
 
                 if ($is_tie) {
                     // 和局特殊处理：庄闲投注退回本金
@@ -555,7 +555,7 @@ class CardSettlementService extends CardServiceBase
      */
     private function calculateRebate($record, $is_win, $pai_result): array
     {
-        $is_tie = in_array(3, $pai_result['win_array']); // 是否和局
+        $is_tie = in_array(7, $pai_result['win_array']); // 是否和局
 
         // 中奖：无洗码费
         if ($is_win) {
